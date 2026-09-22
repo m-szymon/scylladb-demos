@@ -328,6 +328,143 @@ restriction, and a `substring_index` reports that it supports one when the patte
 hands to such an index is then prepared as a substring search statement instead of the usual
 view read. `docs/dev/substring_search.md` in the Scylla checkout describes the design.
 
+## Performance at 10M rows
+
+The demo above runs on 17 rows, which says the feature works but nothing about whether it is
+usable. This section is one run of `substring_test.SubstringSearchTest` from
+[scylla-cluster-tests](../scylla-cluster-tests) against a real cluster on AWS, at the design
+target of 10M names. It is a feasibility check, not a benchmark: one run, one cluster shape, no
+repeats.
+
+### What was measured
+
+| | |
+|---|---|
+| Rows | 10,000,000 synthetic names, CJK-heavy, 1–32 characters |
+| ScyllaDB | 1 × `i4i.xlarge`, substring branch, tablets |
+| Vector Store | 1 × `c8g.xlarge` (4 ARM cores), `substring-index` branch built from source |
+| Loader | 1 × `c5.2xlarge` running `latte` |
+| Index options | `min_gram=1`, `max_gram=3`, `case_sensitive=false` |
+| Query | `SELECT user_id FROM ... WHERE name LIKE '%kw%' LIMIT 20` |
+| Run | `20260922-115919-278074`, 2026-09-22, eu-west-1 |
+
+The index was created *before* the rows were written, so the Vector Store ingested through CDC
+while `latte` was still loading, rather than building afterwards over a full scan.
+
+### Ingestion and index size
+
+| | |
+|---|---|
+| Load | 10M names in ~30 min wall clock |
+| Index caught up | **12 s** after the last row landed (10,000,000 of 10,000,000) |
+| Index settled | 32 segments, ~30 s later |
+| Index size | **328,619,593 bytes ≈ 313 MiB** |
+| Per name | **32.86 bytes** |
+
+The index keeping pace with the load to within 12 seconds is the result that matters here: at this
+rate, incremental indexing is not a phase you wait for, and the "when is the index ready" question
+that shaped the test design turns out to be nearly moot at this scale.
+
+Two notes on the numbers. The 30-minute load is not a load-rate measurement — `latte` ran once per
+100k-name shard and the per-shard wall time was 18.3 s, of which only ~1.8 s was loading (~54k
+names/s); the rest was container startup. And 313 MiB is far below the "a few GB" this branch's
+docs estimated, though the corpus is synthetic with low character diversity, so a real corpus with
+a wider character set will produce more distinct grams and a larger index.
+
+### The query sets
+
+Keywords are drawn from the corpus itself, so every one of them matches something. The three sets
+the AWS plan uses differ in how much work they make the index do:
+
+| set | keyword | why it is in the plan |
+|---|---|---|
+| `char1` | 1 character | The hot case. A single character is carried by a large share of the names, so the candidate set is huge and stopping at `LIMIT` is what keeps it cheap. |
+| `char2` | 2 characters | The typical search-box query, and the shape to judge the design by. Both `char1` and `char2` are within `max_gram = 3`, so each is a single term lookup. |
+| `char4` | 4 characters | Longer than `max_gram`, so the index intersects 3-grams and then verifies every candidate against the stored text. The most expensive shape it serves. |
+
+Two further sets, `latin` (case folding on both sides) and `miss` (keywords no name contains),
+exist in the generator and run in the local docker plan, but are left out of the AWS plan: folding
+is cheap and an empty answer is the floor rather than the question.
+
+### Query latency and throughput
+
+Five phases, 120 s each, `LIMIT 20`, zero errors, every query returning its full 20 rows.
+
+Two latencies matter here and they are not the same thing. **Service time** is how long a request
+actually took once it was sent. **Client-observed latency** additionally counts the time a request
+waited to be sent, so when the requested rate is above what the cluster can serve it measures a
+growing backlog rather than the system. Three of these five phases asked for 10,000 QPS and got
+less, so for those only the service time means anything.
+
+| set | rate | conc. | throughput | service time | client p99 |
+|---|---|---|---|---|---|
+| char2 | 2,000 | 16 | 2,000 op/s | **0.67 ms** | 1.49 ms |
+| char2 | unthrottled | 128 | 9,610 op/s | **13.29 ms** | 20.68 ms |
+| char2 | 10,000 | 64 | 9,704 op/s | **6.57 ms** | *saturated* |
+| char1 | 10,000 | 64 | 9,309 op/s | **6.85 ms** | *saturated* |
+| char4 | 10,000 | 64 | 9,512 op/s | **6.70 ms** | *saturated* |
+
+Service time is latte's mean request latency; only the first two rows have a client-observed
+latency worth printing, since the other three are queueing (their mean client latency was 1.8 s,
+4.5 s and 2.9 s respectively — a measure of the backlog, not of the cluster).
+
+At a realistic 2,000 QPS a containment query is served in **0.67 ms**, p99 **1.49 ms**, against a
+100 ms budget. At the ceiling of ~9.6k QPS service time is **6.6–13.3 ms** depending on how many
+requests are in flight, and the closed-loop p99 is **20.7 ms** — still five times inside budget.
+
+The service-time column is also where the shape of the answer shows up: at the same offered rate
+and concurrency, `char1`, `char2` and `char4` are served in 6.85, 6.57 and 6.70 ms. Four-character
+keywords cost a gram intersection plus verification of every candidate and one-character keywords
+sweep a large fraction of the corpus, yet all three land within 4% of each other.
+
+### Where the ceiling is
+
+The ceiling is real rather than a client-side artifact, and it is **ScyllaDB's base-table read
+path, not the index**.
+
+The client was not the limit. `latte` used 2.8% CPU on the loader in every saturated phase — 27 s
+of CPU over 120 s, about 0.23 of 8 cores — while its concurrency slots sat 97–98% occupied. Nor
+was the concurrency setting badly chosen: raising it from 64 to 128 in-flight requests moved
+throughput from 9,704 to 9,610 op/s, i.e. not at all, while service time went from 6.57 ms to
+13.29 ms — exactly doubled. Throughput fixed and service time rising in step with concurrency is
+saturation by definition; past that point extra concurrency buys latency and nothing else.
+Little's Law holds in both rows (9,704 × 6.57 ms = 63.7 in flight against 62 reported;
+9,610 × 13.29 ms = 127.7 against 126), which is what says these are real service times rather
+than an artifact of how the client scheduled its requests.
+
+The Scylla node was the busy one. During the unthrottled phase its monitoring showed **86% load
+across its 4 cores**, plateaued, with read p99 at 7 ms and no write traffic. Its read latency
+degraded from 0.96 ms at 2,000 QPS to 10.52 ms at the ceiling — most of the 13.5 ms a query took.
+
+This also explains the uniformity in the service times: 6.57, 6.85 and 6.70 ms for three query
+shapes that cost the index very different amounts. Every query is `LIMIT 20`, so whatever the
+index does, Scylla then fetches exactly 20 rows — identical work every time. At 9,610 op/s that is
+192,205 rows/s off one `i4i.xlarge`. The constant per-query cost dominates the variable index-side
+cost, which is why query shape barely moves the number, and it is why the index's own contribution
+cannot be separated out from this run.
+
+So the design target of 10k QPS at p99 < 100 ms was met on latency by a wide margin and missed on
+throughput by 4%, on a cluster whose limiting component is a single 4-core database node doing
+ordinary primary-key reads. Scaling out the ScyllaDB side is the lever; the index was not what ran
+out first. One thing this run does not show is the Vector Store node's own CPU, so while the
+evidence points firmly at Scylla, a second constraint on the index node cannot be fully excluded.
+
+### Reproducing
+
+```sh
+cd scylla-cluster-tests
+python3 data_dir/latte/substring_search/generate_local_dataset.py \
+    --dataset names_10M --names 10000000 --shards 100 --qrels-cap 0
+export SCT_ENABLE_ARGUS=false
+export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the substring branch>
+./docker/env/hydra.sh run-test substring_test.SubstringSearchTest.test_substring_search \
+    --backend aws --config test-cases/substring-search/substring-search-test.yaml
+```
+
+`docs/substring-search-test.md` in the SCT checkout covers the test in full, including the docker
+variant that runs the same flow locally and additionally checks recall and precision against ground
+truth — correctness is verified there rather than in the AWS run, which measures only speed.
+
 ## Known limits of the branch (stage 1)
 
 - No ordering and no paging: `LIMIT` is applied by the index, in the index's order. The customer's
@@ -343,6 +480,6 @@ view read. `docs/dev/substring_search.md` in the Scylla checkout describes the d
   back to filtering, because the index was chosen when the statement was prepared.
 - `case_sensitive = 'false'` lowercases with full Unicode rules on the Vector Store side; CQL has
   no case-insensitive `LIKE` to compare with, so this is documented rather than reconciled.
-- Memory at scale is estimated, not measured: for 10M names of up to 32 characters with the default
-  `max_gram = 3` the estimate is a few GB on the Vector Store; `max_gram = 2` is the knob if that
-  is too much.
+- Index size at scale is now measured rather than estimated: 313 MiB for 10M names at the default
+  `max_gram = 3` (see above), against an earlier estimate of a few GB. The corpus was synthetic and
+  low in character diversity, so a real one will index larger; `max_gram = 2` remains the knob.
