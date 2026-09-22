@@ -1,0 +1,17 @@
+# Two-stage build of the Vector Store from a local checkout of the vector-store repo.
+# Build context: the vector-store repository root, e.g.
+#   podman build -t localhost/vector-store-substring:dev -f Dockerfile.vector-store \
+#          --ignorefile vector-store.dockerignore ~/Dev/reviews/experimental/vector-store
+FROM docker.io/library/rust:1.97.1-bookworm AS builder
+WORKDIR /src
+COPY . .
+RUN cargo build --release --bin vector-store
+
+FROM docker.io/library/debian:bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /src/target/release/vector-store /opt/vector-store/vector-store
+ENV VECTOR_STORE_URI=0.0.0.0:6080
+EXPOSE 6080
+CMD ["/opt/vector-store/vector-store"]

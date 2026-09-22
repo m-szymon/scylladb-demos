@@ -1,0 +1,43 @@
+# Single-node ScyllaDB (built from the substring-index branch) + Vector Store (built from its
+# substring-index branch). Both images are built locally by ./build-images.sh; nothing here is
+# pulled from a registry.
+services:
+  scylla:
+    image: localhost/scylla-substring:dev
+    container_name: substring-demo-scylla
+    command: >
+      --smp 2
+      --memory 1G
+      --overprovisioned 1
+      --developer-mode 1
+      --vector-store-primary-uri http://vector-store:6080
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./:/demo:z,ro
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT now() FROM system.local'"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    networks:
+      - substring-net
+
+  vector-store:
+    image: localhost/vector-store-substring:dev
+    container_name: substring-demo-vector-store
+    environment:
+      VECTOR_STORE_URI: "0.0.0.0:6080"
+      VECTOR_STORE_SCYLLADB_URI: "scylla:9042"
+      VECTOR_STORE_SUBSTRING_INDEXES: "true"   # the default; here to show the switch exists
+    ports:
+      - "6080:6080"
+    depends_on:
+      scylla:
+        condition: service_healthy
+    networks:
+      - substring-net
+
+networks:
+  substring-net:
+    driver: bridge
