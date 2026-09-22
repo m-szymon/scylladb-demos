@@ -1,12 +1,12 @@
 [submodule "scylladb"]
 	path = scylladb
 	url = https://github.com/m-szymon/scylladb.git
-	branch = master
+	branch = substring-index
 [submodule "vector-store"]
 	path = vector-store
 	url = https://github.com/m-szymon/vector-store.git
-	branch = master
+	branch = substring-index
 [submodule "scylla-cluster-tests"]
 	path = scylla-cluster-tests
 	url = https://github.com/m-szymon/scylla-cluster-tests.git
-	branch = pr/fts-aws-run
+	branch = substring-search-perf
