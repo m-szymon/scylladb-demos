@@ -323,8 +323,10 @@ SELECT nickname, register_time FROM search_demo.users
 
 ### 6c. Paging
 
-With `PAGING 2`, the five matches come back two at a time. cqlsh hides the page boundaries, so this
-is the same query through the driver, printing each page as it arrives:
+With `PAGING 2`, the five matches come back two at a time. cqlsh hides the page boundaries, and the
+boundaries are the point, so [page-check.py](page-check.py) runs the same query through the driver
+and prints each page as it arrives (`./page-check.py`, or `podman cp` it into the container if the
+host has no driver):
 
 ```
 LIMIT 20, fetch_size 2:
