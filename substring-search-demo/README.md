@@ -9,8 +9,19 @@ SELECT nickname, username FROM search_demo.users WHERE nickname LIKE '%将军%' 
 ```
 
 No `ALLOW FILTERING`, no table scan: the column carries a `substring_index`, and the query is
-answered by the Vector Store from an n-gram index of the column. Seventeen accounts, mostly CJK
-nicknames with a few Latin ones. Everything runs in two local containers.
+answered by the Vector Store from an n-gram index of the column.
+
+An index created with an `order_by` column answers the rest of the search box too -- newest first,
+filtered by date, a page at a time:
+
+```sql
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' AND register_time < '2024-03-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
+```
+
+Seventeen accounts, mostly CJK nicknames with a few Latin ones. Everything runs in two local
+containers.
 
 ## What you need
 
@@ -44,13 +55,17 @@ few attributes. Each text column gets one index (see [schema.cql](schema.cql)):
 
 | column | type | index | options |
 |---|---|---|---|
-| `nickname` | text | `users_nickname_sub`, `substring_index` | `case_sensitive = 'false'` |
+| `nickname` | text | `users_nickname_sub`, `substring_index` | `case_sensitive = 'false'`, `order_by = 'register_time'` |
 | `username` | text | `users_username_sub`, `substring_index` | `case_sensitive = 'false'` |
 
 ```sql
 CREATE CUSTOM INDEX users_nickname_sub ON search_demo.users (nickname)
-  USING 'substring_index' WITH OPTIONS = {'case_sensitive': 'false'};
+  USING 'substring_index'
+  WITH OPTIONS = {'case_sensitive': 'false', 'order_by': 'register_time'};
 ```
+
+The two indexes differ deliberately: only the nickname one is ordered, so the demo can show what an
+index without `order_by` will not do.
 
 The index options:
 
@@ -59,6 +74,12 @@ The index options:
 | `min_gram` | `1` | the shortest indexed substring, in characters; a shorter keyword is not served |
 | `max_gram` | `3` | the longest indexed substring; a longer keyword is answered from its pieces and verified |
 | `case_sensitive` | `true` | `true` matches like CQL `LIKE` does; `false` lowercases both the column and the keyword |
+| `order_by` | none | a column the index keeps its matches sorted by, newest first; enables `ORDER BY`, a range on that column, and paging |
+
+`order_by` must name an integer or time column of the table (`tinyint`, `smallint`, `int`, `bigint`,
+`counter`, `timestamp`, `time`, `date`). The index carries that column's value alongside each
+indexed name and walks its matches from the highest value down, so the order is global rather than a
+re-sort of one page, and a page can resume where the last one stopped.
 
 Both are `1..8`, `min_gram <= max_gram`. The Vector Store stores every substring of
 `min_gram..max_gram` characters of each value as a term of a Tantivy index, with the row's key. A
@@ -76,11 +97,16 @@ Rules worth knowing when writing your own:
   `ALLOW FILTERING` and scans.
 - The keyword may be a bind marker, `LIKE ?`. The pattern is then checked when the statement is
   executed; a pattern the index does not serve is rejected at that point rather than scanned.
-- `LIMIT` is mandatory and at most 1000. The index stops after that many matches.
-- Nothing else in the `WHERE`, no `ORDER BY`, no `GROUP BY`, no aggregates: one `LIKE` on the
-  indexed column. Result order is whatever order the index returns the keys in.
-- Paging is not supported: with a page size smaller than the limit, the whole result comes in one
-  page with a warning, as for the other external searches.
+- `LIMIT` is mandatory and at most 1000. It bounds the whole query, not one page.
+- On an index with `order_by`, the query may add `ORDER BY <that column> DESC` and a range on that
+  column (`<`, `<=`, `>`, `>=`). Only that column, and only `DESC`. Without `order_by` neither is
+  accepted, and the result order is whatever order the index returns the keys in.
+- Nothing else in the `WHERE`, no `GROUP BY`, no aggregates. A restriction the index cannot apply is
+  rejected rather than dropped: these queries do no post-filtering, so accepting one and ignoring it
+  would return rows that do not match.
+- Paging works on an index with `order_by`: each page tells the index where the last one stopped, so
+  page 50 costs what page 1 costs. Without `order_by` there is no position to resume from, and the
+  whole result comes in one page with a warning, as for the other external searches.
 - Latin case: CQL `LIKE` is case-sensitive and so is the index by default. The demo indexes are
   created with `case_sensitive = 'false'`, since that is what a search box wants.
 
@@ -209,18 +235,116 @@ no rows.
 ### 6. LIMIT
 
 ```sql
-SELECT nickname, username FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 2;
+SELECT nickname, register_time FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 2;
 ```
 ```
- nickname | username
-----------+----------
- 被禁将军 | user0017
-   李将军 | user0002
+ nickname | register_time
+----------+---------------------------------
+ 被禁将军 | 2024-07-02 00:00:00.000000+0000
+   王将军 | 2024-07-01 00:00:00.000000+0000
 
 (2 rows)
 ```
 
-The index stops after two matches. Which two is up to the index; this stage has no ordering.
+The index stops after two matches. With `order_by` set, the two it stops at are the two newest --
+the stop is at the right end of the order, not wherever the walk happened to be.
+
+### 6a. ORDER BY
+
+```sql
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
+```
+```
+ nickname | register_time
+----------+---------------------------------
+ 被禁将军 | 2024-07-02 00:00:00.000000+0000
+   王将军 | 2024-07-01 00:00:00.000000+0000
+ 将军来了 | 2024-03-01 00:00:00.000000+0000
+   李将军 | 2024-02-01 00:00:00.000000+0000
+   宇将军 | 2024-01-01 00:00:00.000000+0000
+
+(5 rows)
+```
+
+The order is the index's, not the base table's, and it is global: the index walks its matches from
+the newest down, so a `LIMIT 2` of this query is the first two rows here rather than two arbitrary
+matches re-sorted.
+
+```
+... ORDER BY register_time ASC LIMIT 20;
+  -> InvalidRequest: Substring search queries can only be ordered DESC
+
+... ORDER BY user_id DESC LIMIT 20;
+  -> InvalidRequest: Substring search queries can only be ordered by register_time, the column the
+     index was created with, not user_id
+```
+
+The index walks one column in one direction. Ordering by anything else, or the other way, is refused
+rather than answered in the wrong order.
+
+### 6b. A range on the ordered column
+
+The date filter of a search box. It is pushed down to the index, which never looks at the excluded
+rows, rather than applied to the rows afterwards.
+
+```sql
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' AND register_time < '2024-03-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
+```
+```
+ nickname | register_time
+----------+---------------------------------
+   李将军 | 2024-02-01 00:00:00.000000+0000
+   宇将军 | 2024-01-01 00:00:00.000000+0000
+
+(2 rows)
+```
+
+`<` excluded 将军来了, registered exactly on 2024-03-01. Both bounds work, and both are exact:
+
+```sql
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%'
+    AND register_time >= '2024-02-01T00:00:00+0000'
+    AND register_time <= '2024-07-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
+```
+```
+ nickname | register_time
+----------+---------------------------------
+   王将军 | 2024-07-01 00:00:00.000000+0000
+ 将军来了 | 2024-03-01 00:00:00.000000+0000
+   李将军 | 2024-02-01 00:00:00.000000+0000
+
+(3 rows)
+```
+
+### 6c. Paging
+
+With `PAGING 2`, the five matches come back two at a time. cqlsh hides the page boundaries, so this
+is the same query through the driver, printing each page as it arrives:
+
+```
+LIMIT 20, fetch_size 2:
+  page 1: ['被禁将军', '王将军']  more=True
+  page 2: ['将军来了', '李将军']  more=True
+  page 3: ['宇将军']  more=False
+  -> 3 pages, 5 rows, duplicates=False
+
+LIMIT 3, fetch_size 2:
+  page 1: ['被禁将军', '王将军']  more=True
+  page 2: ['将军来了']  more=False
+  -> 2 pages, 3 rows, duplicates=False
+
+paged == unpaged: True
+```
+
+Each page carries the index node's position forward, so the next page resumes the walk rather than
+restarting it and skipping -- the cost of page 50 is the cost of page 1, which is the whole point of
+a cursor over an offset. The `LIMIT` bounds the query, not the page: the second run stops after
+three rows across two pages.
 
 ### 7. Names change
 
@@ -276,22 +400,39 @@ SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 1001
   -> InvalidRequest: Substring search queries require a LIMIT that is not greater than 1000. LIMIT was 1001
 
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND status = 0 LIMIT 20;
-SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND username LIKE '%user%' LIMIT 20;
-  -> InvalidRequest: Substring search queries support exactly one LIKE restriction, on the indexed column,
-     and no other WHERE restrictions
+  -> InvalidRequest: Substring search queries cannot restrict status: only the indexed column
+     nickname and the ordered column register_time may be restricted
 
-SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
-  -> InvalidRequest: ORDER BY with 2ndary indexes is not supported.
+SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%'
+  AND register_time = '2024-07-01T00:00:00+0000' LIMIT 20;
+  -> InvalidRequest: Substring search queries support only range restrictions (<, <=, >, >=) on the
+     ordered column register_time
+
+SELECT username FROM search_demo.users WHERE username LIKE '%ng%' ORDER BY register_time DESC LIMIT 20;
+  -> InvalidRequest: ORDER BY requires the substring index to have been created with an 'order_by' option
 ```
 
 A prefix pattern, or any pattern with a wildcard inside the keyword, is not containment: the index
 steps aside and `LIKE` behaves exactly as before, `ALLOW FILTERING` and a scan. The containment
 query itself is strict about its shape, so that what it promises, an index lookup, is what it does.
 
+The strictness is not fussiness. These queries do no post-filtering: whatever the coordinator does
+not send to the index node is not applied anywhere. A restriction that was accepted and then ignored
+would return rows that do not match the query, which is worse than a rejection, so anything the
+index node cannot apply exactly is refused.
+
+The username index is created without `order_by`, and shows the other side of it: no `ORDER BY`, no
+range, and paging it returns the whole result in one page with
+
+```
+Warnings :
+Paging is not supported for Substring Search queries. The entire result set has been returned.
+```
+
 One limit of this stage shows in the last statement of the section: the index is chosen as soon as
 the `LIKE` fits it, `ALLOW FILTERING` or not, so `account_type = 0 AND nickname LIKE '%将军%' ...
-ALLOW FILTERING` is rejected with the "exactly one LIKE restriction" message rather than run as a
-filtered scan. Falling back to the scan in that case is the natural next step.
+ALLOW FILTERING` is rejected rather than run as a filtered scan. Falling back to the scan in that
+case is the natural next step.
 
 ## Under the hood
 
@@ -302,7 +443,7 @@ curl -s http://127.0.0.1:6080/api/v1/indexes
 ```
 ```json
 [{"keyspace":"search_demo","index":"users_nickname_sub",
-  "options":{"type":"substring","min_gram":1,"max_gram":3,"case_sensitive":false},
+  "options":{"type":"substring","order_by":"register_time","min_gram":1,"max_gram":3,"case_sensitive":false},
   "status":"SERVING","count":17,"build_progress":100.0},
  {"keyspace":"search_demo","index":"users_username_sub",
   "options":{"type":"substring","min_gram":1,"max_gram":3,"case_sensitive":false},
@@ -318,9 +459,34 @@ curl -s -X POST http://127.0.0.1:6080/api/v1/indexes/search_demo/users_nickname_
      -H 'content-type: application/json' -d '{"query":"将军","limit":10}'
 ```
 ```json
-{"primary_keys":{"user_id":["e236ee35-83ee-4a12-b3cf-5205bda686c1","2a8083ad-308e-42ac-9681-b0f21282e7da",
-  "7bd0df74-f528-47b7-921e-fb8a45a30208","ac195af8-6535-476f-b876-fb1cc9a96946","2f10c77a-e76a-49f7-8f5c-4646923476e6"]}}
+{"primary_keys":{"user_id":["2a8083ad-308e-42ac-9681-b0f21282e7da","7bd0df74-f528-47b7-921e-fb8a45a30208",
+  "2f10c77a-e76a-49f7-8f5c-4646923476e6","e236ee35-83ee-4a12-b3cf-5205bda686c1","ac195af8-6535-476f-b876-fb1cc9a96946"]}}
 ```
+
+The keys come back in the order the index walked them -- newest first, because this index has
+`order_by` -- and both paths of Scylla's base-table read preserve that order, which is why no sort
+value needs to cross the wire per row. There is no `next_cursor` here: ten were asked for and five
+found, so the walk ran out and there is nothing to resume from.
+
+Ask for two and there is:
+
+```sh
+curl -s -X POST http://127.0.0.1:6080/api/v1/indexes/search_demo/users_nickname_sub/contains \
+     -H 'content-type: application/json' -d '{"query":"将军","limit":2}'
+```
+```json
+{"primary_keys":{"user_id":["2a8083ad-308e-42ac-9681-b0f21282e7da","7bd0df74-f528-47b7-921e-fb8a45a30208"]},
+ "next_cursor":9223373756646775808}
+```
+
+One scalar per page, not per row. It is the sort key of the last row of the page, and Scylla puts it
+in the paging state and sends it back as `cursor` on the next request; a `min_sort_key` /
+`max_sort_key` pair carries a range the same way.
+
+That number is `2^63 + 1719792000000`: the timestamp of 王将军, `2024-07-01T00:00:00Z`, in
+milliseconds, with the sign bit flipped so that negative timestamps sort below positive ones in
+unsigned comparison. **This encoding is written twice**, once here and once in ScyllaDB, and the two
+must agree bit for bit -- see the known limits below.
 
 The routing on the Scylla side is the ordinary secondary-index path: a `LIKE` is a column
 restriction, and a `substring_index` reports that it supports one when the pattern is
@@ -465,11 +631,28 @@ export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the sub
 variant that runs the same flow locally and additionally checks recall and precision against ground
 truth — correctness is verified there rather than in the AWS run, which measures only speed.
 
-## Known limits of the branch (stage 1)
+## Known limits of the branch (stage 2)
 
-- No ordering and no paging: `LIMIT` is applied by the index, in the index's order. The customer's
-  `ORDER BY register_time DESC` with 20 rows per page is the next stage (a sort column as an index
-  option, a keyset cursor in the paging state).
+Ordering, the range and paging are in; keeping them *fast* on a large table is not.
+
+- **Ordered queries are correct always, fast only where the index's segments happen to be
+  value-tight.** The index prunes whole segments by the range of the sort column they hold, which is
+  what makes an ordered query cost the same at page 50 as at page 1. Segments group rows by when
+  they arrived, not by value, so after an unordered backfill every segment spans the whole range,
+  nothing prunes, and an ordered query walks every match instead. At this demo's size that is
+  invisible; at 10M rows it is the difference between microseconds and tens of milliseconds. Keeping
+  segments narrow is the next stage
+  (`vector-store/docs/dev/substring/stage-2-ordering.md`).
+- **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
+  alone, so when several rows share one and the page ends among them, the rest are skipped. A
+  tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;
+  with a coarser sort column it is not.
+- **Only `DESC`, and only the one column the index was created with.**
+- **The sort-key encoding is written twice**, once in ScyllaDB and once in the Vector Store, and the
+  two must agree bit for bit -- the node stores the key that ScyllaDB produces a bound for. A
+  disagreement would filter on one ordering and sort by another, dropping rows from the middle of a
+  result rather than raising an error. Both sides have tests at the boundaries, but the real fix is
+  to send typed values and let the node convert them.
 - One column per index and one `LIKE` per query. Searching nickname and username at once is two
   queries merged by the application, or a later multi-column index.
 - Only `%keyword%` is served. Prefix (`keyword%`) and general patterns keep today's

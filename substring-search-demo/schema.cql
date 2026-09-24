@@ -19,9 +19,15 @@ CREATE TABLE IF NOT EXISTS search_demo.users (
 -- the column (defaults 1..3); a LIKE '%keyword%' on the column is then answered from the index.
 -- CQL LIKE is case-sensitive; case_sensitive = 'false' makes both the index and the keyword
 -- lowercase, which is what a search box wants for Latin names.
+--
+-- order_by names a column the index keeps its matches sorted by, newest first. Only an index
+-- created with it can answer ORDER BY, be restricted by a range on that column, or be paged: the
+-- index walks its matches in that order, so it has a position to resume a later page from. The
+-- column must be an integer or a time type. The username index below is created without it, so
+-- that the difference is visible.
 CREATE CUSTOM INDEX IF NOT EXISTS users_nickname_sub ON search_demo.users (nickname)
   USING 'substring_index'
-  WITH OPTIONS = {'case_sensitive': 'false'};
+  WITH OPTIONS = {'case_sensitive': 'false', 'order_by': 'register_time'};
 
 CREATE CUSTOM INDEX IF NOT EXISTS users_username_sub ON search_demo.users (username)
   USING 'substring_index'

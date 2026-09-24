@@ -7,6 +7,11 @@
 -- from the index, without ALLOW FILTERING and without a scan. Only that shape of pattern is served:
 -- a literal keyword between two %, no other wildcard. Everything else LIKE can do still works the
 -- way it always did, with ALLOW FILTERING.
+--
+-- The nickname index is created with order_by = 'register_time', so it can also answer
+--   WHERE nickname LIKE '%keyword%' AND register_time < t ORDER BY register_time DESC LIMIT n
+-- a page at a time -- a search box with a date filter. Sections 6a to 6c are that. The username
+-- index is created without order_by, and shows what an index without it will not do.
 
 -- ---------------------------------------------------------------------------------------------
 -- 0. The data: seventeen accounts, and the two indexes.
@@ -63,9 +68,53 @@ SELECT nickname, username FROM search_demo.users WHERE nickname LIKE '%将军来
 
 -- ---------------------------------------------------------------------------------------------
 -- 6. LIMIT is what the search box asks for: the index stops after that many matches.
---    Which two of the five come back is up to the index; there is no ordering in this stage.
+--    With order_by set, the two it stops at are the two newest: 被禁将军 and 王将军.
 -- ---------------------------------------------------------------------------------------------
-SELECT nickname, username FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 2;
+SELECT nickname, register_time FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 2;
+
+-- ---------------------------------------------------------------------------------------------
+-- 6a. ORDER BY. The index walks its matches newest first, so the order is the index's, not the
+--     base table's -- and it is global, not a re-sort of one page.
+-- ---------------------------------------------------------------------------------------------
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
+
+-- Only that column, and only DESC: the index has no other column's values to order on, and walks
+-- the one it has downwards. Both are refused rather than answered in the wrong order.
+SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY register_time ASC LIMIT 20;
+SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY user_id DESC LIMIT 20;
+
+-- ---------------------------------------------------------------------------------------------
+-- 6b. A range on the ordered column. The date filter of the search box: it is pushed down to the
+--     index, which never looks at the excluded rows, rather than filtered out afterwards.
+-- ---------------------------------------------------------------------------------------------
+-- The 将军 accounts registered before March: 李将军 and 宇将军.
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' AND register_time < '2024-03-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
+
+-- Between two dates. Both bounds go down to the index.
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%'
+    AND register_time >= '2024-02-01T00:00:00+0000'
+    AND register_time <= '2024-07-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
+
+-- ---------------------------------------------------------------------------------------------
+-- 6c. Paging. Each page tells the index where the last one stopped, so page 5 costs what page 1
+--     costs -- the walk resumes rather than restarting and skipping. The five 将军 accounts come
+--     back two at a time, in one order, with no row repeated and none missed.
+-- ---------------------------------------------------------------------------------------------
+PAGING 2;
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
+PAGING OFF;
+
+-- The LIMIT bounds the whole query, not the page: three rows, over two pages.
+PAGING 2;
+SELECT nickname, register_time FROM search_demo.users
+  WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 3;
+PAGING OFF;
 
 -- ---------------------------------------------------------------------------------------------
 -- 7. Names change. The index follows the table through CDC within a second or two: a renamed
@@ -104,10 +153,25 @@ SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将_来%' LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%';
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 1001;
 
--- It is one LIKE on the indexed column and nothing else: no second restriction, no ORDER BY.
+-- It is one LIKE on the indexed column, optionally a range on the ordered column, and nothing
+-- else. A restriction the index cannot apply is refused rather than dropped: these queries do no
+-- post-filtering, so an accepted-and-ignored predicate would return rows that do not match.
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND status = 0 LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND username LIKE '%user%' LIMIT 20;
-SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
+
+-- Not even an equality on the ordered column: the index takes a range, not a point.
+SELECT nickname FROM search_demo.users
+  WHERE nickname LIKE '%将军%' AND register_time = '2024-07-01T00:00:00+0000' LIMIT 20;
+
+-- The username index was created without order_by, so it has no column to order on and no
+-- position to resume a page from. ORDER BY and a range are both refused on it, and paging it
+-- returns the whole result in one page with a warning saying so.
+SELECT username FROM search_demo.users WHERE username LIKE '%ng%' ORDER BY register_time DESC LIMIT 20;
+SELECT username FROM search_demo.users
+  WHERE username LIKE '%ng%' AND register_time < '2024-06-01T00:00:00+0000' LIMIT 20;
+PAGING 2;
+SELECT username FROM search_demo.users WHERE username LIKE '%ng%' LIMIT 20;
+PAGING OFF;
 
 -- A known limit of this stage: the index is chosen as soon as the LIKE fits it, ALLOW FILTERING
 -- or not, so a containment LIKE mixed with another restriction is rejected rather than run as a
