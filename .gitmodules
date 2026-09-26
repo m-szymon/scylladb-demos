@@ -1,12 +1,12 @@
 [submodule "scylladb"]
 	path = scylladb
 	url = https://github.com/m-szymon/scylladb.git
-	branch = substring-index-stage2
+	branch = substring-index-stage3
 [submodule "vector-store"]
 	path = vector-store
 	url = https://github.com/m-szymon/vector-store.git
-	branch = substring-index-stage2
+	branch = substring-index-stage3
 [submodule "scylla-cluster-tests"]
 	path = scylla-cluster-tests
 	url = https://github.com/m-szymon/scylla-cluster-tests.git
-	branch = substring-search-perf-stage2
+	branch = substring-search-perf-stage3
