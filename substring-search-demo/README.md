@@ -633,18 +633,159 @@ export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the sub
 variant that runs the same flow locally and additionally checks recall and precision against ground
 truth — correctness is verified there rather than in the AWS run, which measures only speed.
 
+## Performance at 10M rows, stage 2: ordering and paging
+
+The stage-1 run above measures containment alone: any twenty matching rows, in any order. The
+search box wants the *newest* twenty and a next page, which is what stage 2 adds. Serving that
+means the index can no longer stop at the first twenty matches; it has to know which twenty are
+the newest. This section is one run of the same SCT test on the stage-3 branches, 2026-09-27,
+with the ordered query of section 6a and the paging of section 6c, on the same cluster shape as
+before (1 × `i4i.xlarge` ScyllaDB, 1 × `c8g.xlarge` Vector Store with 4 cores, 1 × `c5.2xlarge`
+loader; run `20260926-220437-885482`, eu-west-1). It is one run, not a benchmark.
+
+### The design in one paragraph
+
+The index keeps the names in chunks, called segments, and each segment knows the oldest and
+newest `register_time` it holds. An ordered query visits segments newest-first and skips every
+segment that cannot hold anything newer than the page already has, so a deep page costs what
+the first page costs. That only works if each segment covers a narrow slice of time, which is
+not what an index does on its own: it merges chunks by size, regardless of what they hold. Two
+options on the index fix that. `poc_option_2` (a row cap per segment) makes the index merge only
+neighbours in time and never past the cap, so rows that arrive in time order stay in slices of
+time. `poc_option_3` (the rewrite) repairs an index created *after* the table was loaded, where
+every chunk spans all of time: in the background it moves the rows, one slice of time at a
+time, into narrow chunks. Long keywords get a separate improvement: a keyword longer than
+`max_gram` yields candidates that each need their stored name read to confirm the match, and
+the index now sorts the candidates by time first and confirms from the newest down, stopping as
+soon as the page cannot change. Design and reasoning:
+[`vector-store/docs/dev/substring/stage-2-ordering.md`](../vector-store/docs/dev/substring/stage-2-ordering.md).
+
+### What was compared
+
+Six indexes on the same corpus, so that each question is answered by one difference. Four were
+created before the load and ingested through CDC while `latte` wrote; two were created on the
+loaded table and built by the Vector Store's full scan, which reads the table in storage order,
+not time order.
+
+| index | created | options | the question it answers |
+|---|---|---|---|
+| `default` | before the load | none | the baseline: the index's own merging |
+| `p3a_100k` | before the load | cap 100,000 rows | does keeping segments narrow pay, and what does the cap cost |
+| `p3a_250k` | before the load | cap 250,000 rows | the same with fewer, larger segments |
+| `p3a_100k_inorder` | before the load | cap 100,000, old verification | what the newest-first confirmation of long keywords is worth |
+| `wide` | after the load | none | what a customer gets adding an index to an existing table |
+| `rewrite` | after the load | cap 100,000 + rewrite | whether the rewrite repairs it, and what it costs |
+
+Every index was asked the same questions for 120 s each, 20 rows per page, 10,000 queries per
+second offered with 64 in flight: the two-character keyword ordered newest-first (page 1), the
+same at a page half-way down the results (a cursor at the median `register_time`), the
+one-character keyword, and the four-character keyword. The `wide` and `rewrite` indexes were
+asked three of the four.
+
+### Ingestion and build
+
+| | |
+|---|---|
+| Four indexes caught up with the load | 15 s after the last row, all four alike |
+| Index size per name | 34.7 bytes (`default`), 35.8 bytes (cap 100k), 35.3 bytes (cap 250k) |
+| Full-scan build of 10M names after the load | 136 s (`wide`), 166 s (`rewrite`) |
+| The rewrite of all 10M rows | 5 min: 100 slices, one every 3 s, each row read from the store and re-indexed once |
+
+The cap costs nothing on ingestion and 3% of index size. The layouts it produced: `default` had
+16 segments spanning 10.9% of the time range on average and 35.8% at worst; cap 100k had 100
+segments of exactly 1% each; cap 250k had 41 segments of 3.1% on average. The `wide` build had
+23 segments each spanning 100%; after the rewrite, 126 of its segments spanned 1% each.
+
+### Throughput and index work per query
+
+Throughput is what `latte` achieved against the 10,000 offered; the walk is the Vector Store's
+own count of microseconds spent in the index per query, which is what separates the index's
+cost from ScyllaDB's constant 20-row fetch (see "Where the ceiling is" above). Phases that
+reached the offered rate had a client p99 between 12 and 104 ms; a phase that fell short queues
+without bound in `latte`, so its p99 says nothing and is not printed.
+
+| index | 2-char, page 1 | 2-char, deep page | 1-char | 4-char |
+|---|---|---|---|---|
+| `default` | 10.0k/s, 57 µs | **8.5k/s, 402 µs** | 10.0k/s, 76 µs | 10.0k/s, 118 µs |
+| `p3a_100k` | 10.0k/s, 91 µs | 9.5k/s, 92 µs | 9.9k/s, 113 µs | 10.0k/s, 134 µs |
+| `p3a_250k` | 10.0k/s, 44 µs | 9.5k/s, 162 µs | 10.0k/s, 51 µs | 10.0k/s, 116 µs |
+| `p3a_100k_inorder` | 9.8k/s, 95 µs | 9.7k/s, 78 µs | 10.0k/s, 117 µs | **5.5k/s, 667 µs** |
+| `wide` | **1.5k/s, 2.6 ms** | **0.9k/s, 4.2 ms** | **1.1k/s, 3.6 ms** | not run |
+| `rewrite` | 9.9k/s, 75 µs | 9.3k/s, 136 µs | 10.0k/s, 94 µs | not run |
+
+What each difference says:
+
+- **Narrow segments make deep pages cheap.** The `default` index is the only one under target on
+  a deep page: 402 µs against 92 µs with the cap, because a deep page on a wide segment scans
+  40,000 postings where a narrow one scans 3,000. Both caps meet the target; 250k gives cheaper
+  first pages (fewer segments to consider), 100k gives cheaper deep pages (a smaller segment to
+  scan). The cost of the cap is the per-query bookkeeping of considering 100 segments instead of
+  16, visible as 91 µs against 57 µs on page 1, and well inside the budget.
+- **Confirming long keywords newest-first is worth four times.** Same index, same layout, same
+  207 candidates per query: 40 stored names read instead of 223, 134 µs instead of 667, and
+  10,000 queries per second instead of 5,500. This was the one shape below target before.
+- **An index added to a loaded table is unusable for ordered queries until it is rewritten.** On
+  the `wide` build every query scans 300,000 postings and runs at 1,500 per second; the same
+  build with the cap and the rewrite answers at 9,900. The repair took five minutes for 10M rows
+  and ran while no queries were being served.
+- **What the run also found.** The rewrite's main pass converged, but the sparse remains of the
+  last slices produced follow-up passes that never ended: the index kept re-planning small jobs
+  during the `rewrite` round, so its numbers above carry that background work and four small
+  chunks still spanning half the range. The cause (a slice of time cut by row count over sparse
+  rows can be very wide) is fixed on the branch and covered by unit tests, but not re-measured
+  at 10M.
+
+### Names and keywords of 1 to 32 characters
+
+The requirement is names of 1 to 32 characters and keywords of 1 to 32 characters. The corpus
+already spans the first range: the names are 1 to 32 characters, so the ingestion, size and
+build figures cover it, and a longer name costs the index only its extra grams (a 32-character
+name has up to 93 gram positions against a 4-character name's 9, which is what the 35 bytes per
+name averages over).
+
+Keyword length is only partly covered. Keywords of 1 to 3 characters are a single term lookup
+each; that is `char1` and `char2` above, and 3 is the same shape. Anything longer is an
+intersection of the keyword's 3-character grams followed by confirmation of the candidates, and
+the run measured only the shortest such keyword, 4 characters, which is also the most expensive
+one: with each added character the intersection has one more gram to agree on and the candidate
+set shrinks fast, so an 8- or 16-character keyword yields a handful of candidates where a
+4-character one yields 207, and the confirmation it pays for is bounded by the two-pass walk at
+the page plus those candidates. The one cost that grows with length is looking up more terms per
+segment the query opens; for a first page that is one segment. The unmeasured case is a *rare*
+long keyword deep into the results, which has to open many segments to fill a page, each with
+up to 30 terms to look up. That is the case to add to the plan: keyword sets at 8, 16 and 32
+characters, which the corpus generator does not produce yet (it stops at `char4`).
+
+### Reproducing
+
+The stage-2 plan is `data_dir/latte/substring_search/aws_variants_config.yaml`:
+
+```sh
+cd scylla-cluster-tests
+export SCT_ENABLE_ARGUS=false
+export SCT_UNIFIED_PACKAGE=<presigned url of the scylla unified tarball built from the stage-3 branch>
+export SCT_SEARCH_TEST_CONFIG=data_dir/latte/substring_search/aws_variants_config.yaml
+./docker/env/hydra.sh run-test substring_test.SubstringSearchTest.test_substring_search \
+    --backend aws --config test-cases/substring-search/substring-search-test.yaml
+```
+
+About 3 h 40 min end to end. The `names_10M_backfill` dataset is the same corpus under a second
+name (`ln -s names_10M data_dir/latte/substring_search/names_10M_backfill`), so that the two
+after-the-load indexes get a load of their own.
+
 ## Known limits of the branch (stage 2)
 
 Ordering, the range and paging are in; keeping them *fast* on a large table is not.
 
-- **Ordered queries are correct always, fast only where the index's segments happen to be
-  value-tight.** The index prunes whole segments by the range of the sort column they hold, which is
-  what makes an ordered query cost the same at page 50 as at page 1. Segments group rows by when
-  they arrived, not by value, so after an unordered backfill every segment spans the whole range,
-  nothing prunes, and an ordered query walks every match instead. At this demo's size that is
-  invisible; at 10M rows it is the difference between microseconds and tens of milliseconds. Keeping
-  segments narrow is the next stage
-  (`vector-store/docs/dev/substring/stage-2-ordering.md`).
+- **Ordered queries are fast only with the segment cap on, and an index added to a loaded table
+  only after its rewrite.** Both are opt-in placeholders today (`poc_option_2`, `poc_option_3`)
+  with no real names, no defaults, and no guidance on the cap beyond the two values measured
+  above. The rewrite runs in the background one slice every three seconds, with no way to pause
+  it, watch it other than `/metrics`, or hurry it; and its follow-up passes over the last slices
+  looped on the 10M run, a fix that is on the branch but not re-measured at that size.
+- **Keywords longer than 4 characters are unmeasured.** The design says they get cheaper, not
+  dearer, except for rare keywords deep into the results; the corpus generator has no sets
+  beyond `char4` yet.
 - **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
   alone, so when several rows share one and the page ends among them, the rest are skipped. A
   tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;
