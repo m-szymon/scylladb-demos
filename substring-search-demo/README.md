@@ -508,7 +508,7 @@ repeats.
 
 | | |
 |---|---|
-| Rows | 10,000,000 synthetic names, CJK-heavy, 1–32 characters |
+| Rows | 10,000,000 synthetic names, CJK-heavy, 2–10 characters |
 | ScyllaDB | 1 × `i4i.xlarge`, substring branch, tablets |
 | Vector Store | 1 × `c8g.xlarge` (4 ARM cores), `substring-index` branch built from source |
 | Loader | 1 × `c5.2xlarge` running `latte` |
@@ -738,10 +738,13 @@ What each difference says:
 ### Names and keywords of 1 to 32 characters
 
 The requirement is names of 1 to 32 characters and keywords of 1 to 32 characters. The corpus
-already spans the first range: the names are 1 to 32 characters, so the ingestion, size and
-build figures cover it, and a longer name costs the index only its extra grams (a 32-character
-name has up to 93 gram positions against a 4-character name's 9, which is what the 35 bytes per
-name averages over).
+of the two runs above does not span the first range: its names are 2 to 10 characters (the
+stage-1 table used to say 1–32, which was the generator's cap, not what it produced). A longer
+name costs the index only its extra grams: a 32-character name has up to 93 gram positions
+against a 10-character name's 27, so a corpus with a tenth of its names at 11 to 32 characters
+should index about 25% larger per name and no slower. The generator now has a `--long-names`
+option that produces exactly that corpus, plus keyword sets of 8, 16 and 32 characters, and the
+follow-up plan (`aws_followup_config.yaml`) measures both; its numbers are not in yet.
 
 Keyword length is only partly covered. Keywords of 1 to 3 characters are a single term lookup
 each; that is `char1` and `char2` above, and 3 is the same shape. Anything longer is an
@@ -783,9 +786,9 @@ Ordering, the range and paging are in; keeping them *fast* on a large table is n
   above. The rewrite runs in the background one slice every three seconds, with no way to pause
   it, watch it other than `/metrics`, or hurry it; and its follow-up passes over the last slices
   looped on the 10M run, a fix that is on the branch but not re-measured at that size.
-- **Keywords longer than 4 characters are unmeasured.** The design says they get cheaper, not
-  dearer, except for rare keywords deep into the results; the corpus generator has no sets
-  beyond `char4` yet.
+- **Names longer than 10 and keywords longer than 4 characters are unmeasured.** The design says
+  long keywords get cheaper, not dearer, except for rare keywords deep into the results; the
+  corpus with long names and the 8, 16 and 32 character sets exist now, the run does not yet.
 - **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
   alone, so when several rows share one and the page ends among them, the rest are skipped. A
   tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;
