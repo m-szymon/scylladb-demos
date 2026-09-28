@@ -902,6 +902,10 @@ not, or not yet measured.
   when it takes the index), and a disagreement refuses an index. The sort-key encoding itself is
   no longer duplicated: since stage 4 a range bound travels as a value of the column and the
   node encodes it, so nothing outside the node can misorder a result.
+- **A long keyword on a case-insensitive index is still verified on the node** (stage 5 moves
+  that check to ScyllaDB for case-sensitive indexes only, because the node's Unicode case
+  folding is not something ScyllaDB can repeat exactly). Such an index pays a document-store
+  read per candidate for keywords past `max_gram`, as before.
 - One column per index and one `LIKE` per query. Searching nickname and username at once is two
   queries merged by the application, or a later multi-column index.
 - `%keyword%`, `keyword%` and `%keyword` are served (stage 4: the index marks both ends of every
