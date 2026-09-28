@@ -633,18 +633,87 @@ export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the sub
 variant that runs the same flow locally and additionally checks recall and precision against ground
 truth — correctness is verified there rather than in the AWS run, which measures only speed.
 
+## Performance at 10M rows, stage 2: ordering and paging
+
+The stage-1 run above measures containment alone: any twenty matching rows, in any order. The
+search box wants the *newest* twenty and a next page, which is what stage 2 adds. Serving an
+order means the index can no longer stop at the first twenty matches; it has to know which
+twenty are the newest. This section is what the stage-2 branches measured on 2026-09-25, on the
+same cluster shape as the stage-1 run (1 × `i4i.xlarge` ScyllaDB, 1 × `c8g.xlarge` Vector Store
+with 4 cores, 1 × `c5.2xlarge` loader), with the ordered query of section 6a and the paging of
+section 6c. Several runs in one evening, one cluster shape, no repeats: a feasibility check.
+
+### The design in one paragraph
+
+The index keeps the names in chunks, called segments, and each segment knows the oldest and
+newest `register_time` it holds. An ordered query visits segments newest-first and skips every
+segment that cannot hold anything newer than the page already has, so a deep page costs what
+the first page costs. That only works if each segment covers a narrow slice of time, which is
+not what an index does on its own: it merges chunks by size, regardless of what they hold.
+`poc_option_2`, a row cap per segment, makes the index merge only neighbours in time and never
+past the cap, so rows that arrive in time order stay in slices of time. Long keywords get a
+separate improvement: a keyword longer than `max_gram` yields candidates that each need their
+stored name read to confirm the match, and the index sorts the candidates by time first and
+confirms from the newest down, stopping as soon as the page cannot change. Design and
+reasoning:
+[`vector-store/docs/dev/substring/stage-2-ordering.md`](../vector-store/docs/dev/substring/stage-2-ordering.md).
+
+### What was measured
+
+Three indexes created before the load and fed by the same CDC stream: Tantivy's default merging,
+the cap at 250,000 rows, the cap at 100,000 rows. Every index was asked the same questions for
+120 s each, 20 rows per page, 10,000 queries per second offered with 64 in flight. The walk is
+the Vector Store's own count of microseconds in the index per query; the throughput is what
+`latte` achieved.
+
+| | default | cap 250k | cap 100k |
+|---|---|---|---|
+| segments, mean span, widest | 16, 10.8%, 35.7% | 41, 3.3%, 5.2% | 100, 1.0%, 1.0% |
+| caught up after the load | 15 s | 15 s | 15 s |
+| 2-char keyword, page 1 | 10.2k/s, 28 µs | 9.6k/s, 111 µs | 9.8k/s, 81 µs |
+| 2-char keyword, unthrottled | — | 9.7k/s | 10.1k/s |
+| 2-char keyword, deep page (cursor at the median) | 3.1k–4.5k/s on earlier layouts | 9.75k/s, 168 µs | **9.85k/s, 76 µs** |
+| 1-char keyword | — | 10.0k/s | 10.0k/s |
+| 4-char keyword (verified) | — | 9.6k/s, 112 stored names read | 5.8k/s, 207 read |
+
+What it settled:
+
+- **The cap is what makes deep pages cheap.** On the default layout a deep page landed in a
+  1.3M-row segment and scanned 76,000 postings; with the 100k cap it scans 3,000 and costs what
+  page 1 costs, the design's claim. Neither cap slowed ingestion.
+- **Page 1 had a fixed cost of about 450 µs** before this run's fixes: every query opened every
+  segment's sort column to read its bounds. Caching the columns per segment removed it; the
+  numbers above are with the cache.
+- **A `FAST` primary-id column is not worth its bytes** (`poc_option_1`, measured 3.9k/s against
+  7.1k/s on the same load): resolving the page from the store costs 20 µs.
+- **The verified path was the one shape below target**: 207 stored names read for a 4-character
+  keyword at the 100k cap, because a single narrow newest segment scanned in ascending time
+  order makes every later candidate beat the page. The two-pass verification (confirm from the
+  newest down, stop when the page cannot change) is on this branch; its measurement at 10M is in
+  the stage-3 report (40 reads, 10.0k/s).
+
+### Reproducing
+
+```sh
+cd scylla-cluster-tests
+export SCT_ENABLE_ARGUS=false
+export SCT_UNIFIED_PACKAGE=<presigned url of the scylla unified tarball built from the stage-2 branch>
+export SCT_SEARCH_TEST_CONFIG=data_dir/latte/substring_search/aws_page1_config.yaml
+./docker/env/hydra.sh run-test substring_test.SubstringSearchTest.test_substring_search \
+    --backend aws --config test-cases/substring-search/substring-search-test.yaml
+```
+
 ## Known limits of the branch (stage 2)
 
 Ordering, the range and paging are in; keeping them *fast* on a large table is not.
 
-- **Ordered queries are correct always, fast only where the index's segments happen to be
-  value-tight.** The index prunes whole segments by the range of the sort column they hold, which is
-  what makes an ordered query cost the same at page 50 as at page 1. Segments group rows by when
-  they arrived, not by value, so after an unordered backfill every segment spans the whole range,
-  nothing prunes, and an ordered query walks every match instead. At this demo's size that is
-  invisible; at 10M rows it is the difference between microseconds and tens of milliseconds. Keeping
-  segments narrow is the next stage
-  (`vector-store/docs/dev/substring/stage-2-ordering.md`).
+- **Ordered queries are fast only with the segment cap on, and only for rows that arrived in
+  time order.** The cap (`poc_option_2`) keeps segments in slices of time as rows arrive; it
+  cannot repair an index created on an already loaded table, whose full-scan build reads the
+  table in storage order and leaves every segment spanning the whole range, so nothing prunes.
+  That repair, a background rewrite, is stage 3.
+- **The cap is an unnamed placeholder option** with no default; 100,000 rows is the measured
+  choice.
 - **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
   alone, so when several rows share one and the page ends among them, the rest are skipped. A
   tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;

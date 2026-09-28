@@ -6,14 +6,23 @@ submodule pins onto the branches that implement it, and adds the demo.
 
 | path | branch | what it is |
 |---|---|---|
-| [scylladb](scylladb) | `substring-index` | the `substring_index` custom index class, the CQL routing for `LIKE '%keyword%'`, and the statement that asks the index node |
-| [vector-store](vector-store) | `substring-index` | the index node: the n-gram index kind and the `/contains` endpoint |
-| [scylla-cluster-tests](scylla-cluster-tests) | `substring-search-perf` | the benchmark: index size per name and query latency under load |
-| [substring-search-demo](substring-search-demo) | | a runnable demo of the feature, with its own README |
+| [scylladb](scylladb) | `substring-index-stage2` | the `substring_index` custom index class, the CQL routing of `LIKE '%keyword%'`, `ORDER BY`, the range on the ordered column, cursor paging, and the placeholder index options |
+| [vector-store](vector-store) | `substring-index-stage2` | the index node: n-gram index, ordered walk with segment pruning, the segment cap (`poc_option_2`), two-pass verification, per-query counters |
+| [scylla-cluster-tests](scylla-cluster-tests) | `substring-search-perf-stage2` | the benchmark: ordered and paged query sets, index variants over one load, layout and per-query counters |
+| [substring-search-demo](substring-search-demo) | | a runnable demo of every supported query, with the measurements |
 
-Start with [substring-search-demo/README.md](substring-search-demo/README.md); it explains the
-index, the query, what the branches do and do not do yet, and what the feature measured at 10M
-rows on AWS. For the benchmark itself, see
+This is **stage 2** of three. Stage 1 (`substring-index`, `substring-search-perf`) is
+containment alone. Stage 2 adds `ORDER BY` newest-first, a range on the ordered column, cursor
+paging, the segment cap that keeps deep pages cheap, and two-pass verification of long keywords.
+Stage 3 (`*-stage3`) adds the background rewrite that repairs an index created on an already
+loaded table, and names and keywords up to 32 characters; its superproject branch reports all
+runs.
+
+Start with [substring-search-demo/README.md](substring-search-demo/README.md): the index, the
+query, what the branches do and do not do yet, and what stages 1 and 2 measured at 10M rows on
+AWS. The design behind stage 2 and the measurements as they came in are in
+[vector-store/docs/dev/substring/stage-2-ordering.md](vector-store/docs/dev/substring/stage-2-ordering.md).
+For the benchmark itself, see
 [scylla-cluster-tests/docs/substring-search-test.md](scylla-cluster-tests/docs/substring-search-test.md),
 which runs from a developer machine against an AWS cluster.
 
@@ -40,10 +49,10 @@ out. `push.recurseSubmodules=check` is set here, so a superproject push that wou
 refused rather than accepted.
 
 ```sh
-git -C scylladb             push origin substring-index
-git -C vector-store         push origin substring-index
-git -C scylla-cluster-tests push origin substring-search-perf
-git push origin substring-index
+git -C scylladb             push origin substring-index-stage2
+git -C vector-store         push origin substring-index-stage2
+git -C scylla-cluster-tests push origin substring-search-perf-stage2
+git push origin substring-index-stage2
 ```
 
 Pushing the first two is also a prerequisite of an AWS benchmark run: the index node builds
