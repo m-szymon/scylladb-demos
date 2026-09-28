@@ -738,26 +738,45 @@ What each difference says:
 ### Names and keywords of 1 to 32 characters
 
 The requirement is names of 1 to 32 characters and keywords of 1 to 32 characters. The corpus
-of the two runs above does not span the first range: its names are 2 to 10 characters (the
-stage-1 table used to say 1–32, which was the generator's cap, not what it produced). A longer
-name costs the index only its extra grams: a 32-character name has up to 93 gram positions
-against a 10-character name's 27, so a corpus with a tenth of its names at 11 to 32 characters
-should index about 25% larger per name and no slower. The generator now has a `--long-names`
-option that produces exactly that corpus, plus keyword sets of 8, 16 and 32 characters, and the
-follow-up plan (`aws_followup_config.yaml`) measures both; its numbers are not in yet.
+of the runs above has names of 2 to 10 characters (the stage-1 table used to say 1–32, which
+was the generator's cap, not what it produced), so a second corpus was generated with
+`--long-names`: the same names, except that a tenth of them are 11 to 32 characters long, plus
+keyword sets of 8, 16 and 32 characters, each cut from the middle of a different long name so
+that it matches that name and rarely another. One run on 2026-09-28 (run
+`20260928-060523-995775`, same cluster shape, the 100k cap, 10,000 queries per second offered):
 
-Keyword length is only partly covered. Keywords of 1 to 3 characters are a single term lookup
-each; that is `char1` and `char2` above, and 3 is the same shape. Anything longer is an
-intersection of the keyword's 3-character grams followed by confirmation of the candidates, and
-the run measured only the shortest such keyword, 4 characters, which is also the most expensive
-one: with each added character the intersection has one more gram to agree on and the candidate
-set shrinks fast, so an 8- or 16-character keyword yields a handful of candidates where a
-4-character one yields 207, and the confirmation it pays for is bounded by the two-pass walk at
-the page plus those candidates. The one cost that grows with length is looking up more terms per
-segment the query opens; for a first page that is one segment. The unmeasured case is a *rare*
-long keyword deep into the results, which has to open many segments to fill a page, each with
-up to 30 terms to look up. That is the case to add to the plan: keyword sets at 8, 16 and 32
-characters, which the corpus generator does not produce yet (it stops at `char4`).
+| | |
+|---|---|
+| Index caught up with the load | 15 s after the last row, as with short names |
+| Index size per name | **49.8 bytes**, against 35.8 with short names: +39% for a tenth of the names being long |
+
+| keyword | queries/s | walk µs | segments opened | postings scanned | stored names read |
+|---|---|---|---|---|---|
+| 2 characters, page 1 | 10.0k | 92 | 1 | 4,849 | 20 |
+| 2 characters, deep page | 10.0k | 112 | 1 | 4,841 | 20 |
+| 1 character | 10.0k | 119 | 1 | 8,017 | 20 |
+| 4 characters | 9.8k | 158 | 1 | 469 | 40 |
+| **8 characters** | **5.0k** | **750** | **100** | 3 | 6 |
+| **16 characters** | **2.3k** | **1,688** | **100** | 1 | 2 |
+| **32 characters** | **1.1k** | **3,641** | **100** | 1 | 2 |
+| 8 characters, deep page | 9.2k | 370 | 50 | 2 | 4 |
+
+Name length costs nothing on ingestion and 39% on index size. Keyword length is a different
+story, and not the one the design expected. Up to 4 characters nothing changes. From 8
+characters up, a keyword matches fewer names than a page holds, so the walk can never stop
+early: it opens every one of the 100 segments and in each looks up all of the keyword's grams
+and intersects them, only to find nothing. The postings scanned and names read are tiny; the
+time is per-segment overhead on segments that hold no match, about 120 µs per gram of the
+keyword across the 100 segments, linear in keyword length. A deep page halves it because half
+the segments lie above the cursor. This is a consequence of the cap: the same keyword on the
+16-segment default layout would cost a sixth of it, which is the trade the cap makes.
+
+The fix, not yet implemented: a map per index from each 3-character gram to the set of segments
+that contain it, rebuilt on every reload from the segments' term dictionaries (a million grams
+times 100 bits, a few megabytes). A keyword past `max_gram` intersects its grams' sets first and
+opens only the segments that survive: three segments for a keyword matching three names instead
+of a hundred, which should bring the 32-character case from 3.6 ms to under 100 µs. The
+short-keyword path is untouched.
 
 ### Reproducing
 
@@ -786,9 +805,12 @@ Ordering, the range and paging are in; keeping them *fast* on a large table is n
   above. The rewrite runs in the background one slice every three seconds, with no way to pause
   it, watch it other than `/metrics`, or hurry it; and its follow-up passes over the last slices
   looped on the 10M run, a fix that is on the branch but not re-measured at that size.
-- **Names longer than 10 and keywords longer than 4 characters are unmeasured.** The design says
-  long keywords get cheaper, not dearer, except for rare keywords deep into the results; the
-  corpus with long names and the 8, 16 and 32 character sets exist now, the run does not yet.
+- **Rare long keywords miss the target on a capped index.** A keyword of 8 characters or more
+  matches fewer names than a page, so the walk opens all 100 segments and pays the gram lookups
+  in each: 5.0k queries per second at 8 characters, 1.1k at 32 (see above). A gram-to-segments
+  map is the fix; until it is in, the cap trades long-keyword throughput for deep-page cost.
+- **The rewrite's range-width fix is not re-measured at 10M.** The run meant to do it was lost
+  to a network outage on the runner's side; the in-process reproduction passes.
 - **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
   alone, so when several rows share one and the page ends among them, the rest are skipped. A
   tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;
