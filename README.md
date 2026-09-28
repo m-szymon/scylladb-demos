@@ -88,9 +88,9 @@ The run ids are quoted in the demo README.
    `aws_followup_config.yaml` (about 2 h 20 min) which also re-measures the rewrite fix.
 2. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
    whenever `order_by` is set (100k), the rewrite on by default.
-3. Typed values in the request so the sort-key encoding exists in one place instead of two
-   (the tie-break cursor and `ASC` are done in stage 4). General `LIKE` patterns (`_`, a `%`
-   inside the keyword) stay on `ALLOW FILTERING`.
+3. General `LIKE` patterns (`_`, a `%` inside the keyword), which stay on `ALLOW FILTERING`
+   today. (The tie-break cursor, `ASC`, and typed range bounds so that the sort-key encoding
+   lives on the node only are done in stage 4.)
 4. Unmeasured behaviour: a rewrite under a steady stream of writes, queries during a rewrite,
    index size on a real corpus with a wide character set.
 5. Splitting the branches into reviewable pull requests.

@@ -478,17 +478,22 @@ curl -s -X POST http://127.0.0.1:6080/api/v1/indexes/search_demo/users_nickname_
 ```
 ```json
 {"primary_keys":{"user_id":["2a8083ad-308e-42ac-9681-b0f21282e7da","7bd0df74-f528-47b7-921e-fb8a45a30208"]},
- "next_cursor":9223373756646775808}
+ "next_cursor":"{\"sort_key\":9223373756646775808,\"primary_key\":{\"user_id\":\"7bd0df74-f528-47b7-921e-fb8a45a30208\"}}"}
 ```
 
-One scalar per page, not per row. It is the sort key of the last row of the page, and Scylla puts it
-in the paging state and sends it back as `cursor` on the next request; a `min_sort_key` /
-`max_sort_key` pair carries a range the same way.
+One cursor per page, not per row. It is an opaque string naming the last row of the page: its
+sort key and its primary key, so that the next page resumes after exactly that row even among
+rows sharing a sort value. Scylla puts it in the paging state and sends it back as `cursor` on
+the next request without reading it.
 
-That number is `2^63 + 1719792000000`: the timestamp of 王将军, `2024-07-01T00:00:00Z`, in
-milliseconds, with the sign bit flipped so that negative timestamps sort below positive ones in
-unsigned comparison. **This encoding is written twice**, once here and once in ScyllaDB, and the two
-must agree bit for bit -- see the known limits below.
+The sort key inside is the node's own encoding (`2^63 + 1719792000000`: the timestamp of 王将军,
+`2024-07-01T00:00:00Z`, in milliseconds, with the sign bit flipped so that negative timestamps
+sort below positive ones in unsigned comparison) and nothing outside the node needs to know it.
+A range on the ordered column travels as the column's own values: `registered_at >= X AND
+registered_at < Y` becomes
+`"min_sort_value":{"value":"2024-01-01T00:00:00.000Z","inclusive":true}` and
+`"max_sort_value":{"value":"2024-07-01T00:00:00.000Z","inclusive":false}`, and the node encodes
+them the same way it encodes the column at ingestion.
 
 The routing on the Scylla side is the ordinary secondary-index path: a `LIKE` is a column
 restriction, and a `substring_index` reports that it supports one when the pattern is
@@ -893,11 +898,10 @@ not, or not yet measured.
   passed the 3000-name docker smoke (2026-09-28, run `8247ff98`: every shape with zero errors,
   ground truth held, ascending and windowed pages full, prefix and suffix pages smaller than
   containment as expected) and is not measured at 10M.
-- **The sort-key encoding is written twice**, once in ScyllaDB and once in the Vector Store, and the
-  two must agree bit for bit -- the node stores the key that ScyllaDB produces a bound for. A
-  disagreement would filter on one ordering and sort by another, dropping rows from the middle of a
-  result rather than raising an error. Both sides have tests at the boundaries, but the real fix is
-  to send typed values and let the node convert them.
+- **The list of orderable types is written twice** (ScyllaDB checks it at `CREATE INDEX`, the node
+  when it takes the index), and a disagreement refuses an index. The sort-key encoding itself is
+  no longer duplicated: since stage 4 a range bound travels as a value of the column and the
+  node encodes it, so nothing outside the node can misorder a result.
 - One column per index and one `LIKE` per query. Searching nickname and username at once is two
   queries merged by the application, or a later multi-column index.
 - `%keyword%`, `keyword%` and `%keyword` are served (stage 4: the index marks both ends of every
