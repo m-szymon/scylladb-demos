@@ -14,9 +14,23 @@ This file is the handover: what exists, what it measured, how to run it, and wha
 | [scylla-cluster-tests](scylla-cluster-tests) | `substring-search-perf-stage3` | the benchmark: corpus generator, plans, index variants per dataset, layout and per-query counters |
 | [substring-search-demo](substring-search-demo) | | a two-container demo of every supported query, and the plain-language report of all runs |
 
-All three forks are `m-szymon/...`; `upstream` in each checkout is the ScyllaDB repository. The
-stage-1 branches (`substring-index`, `substring-search-perf`) are the history; stage 3 contains
-them.
+All three forks are `m-szymon/...`; `upstream` in each checkout is the ScyllaDB repository.
+
+## The three stages
+
+Each stage is a set of branches (one per repository, plus a branch of this superproject that pins
+them) and each contains the previous one. The names are `substring-index` / `substring-search-perf`
+for stage 1, and the same with `-stage2` and `-stage3` after them.
+
+| stage | what it added | measured |
+|---|---|---|
+| 1 | containment: `LIKE '%keyword%' LIMIT n` answered by the index node, any order | 2026-09-22: 9.6k queries/s, bounded by ScyllaDB's row reads |
+| 2 | `ORDER BY` newest-first, a range on the ordered column, cursor paging; the segment cap (`poc_option_2`) that keeps deep pages cheap; two-pass verification of long keywords; per-query counters | 2026-09-25 (design note) and 2026-09-27 (demo README) |
+| 3 | the background rewrite (`poc_option_3`) that repairs an index created on an already loaded table; names and keywords up to 32 characters | 2026-09-27 and 2026-09-28 (demo README) |
+
+The scylladb branch is the same commit for stages 2 and 3: stage 3 is index-node and benchmark
+work only. The demo README on this branch reports every run; the stage-2 branch of this
+superproject reports the runs up to its own state.
 
 ## What to read, in order
 

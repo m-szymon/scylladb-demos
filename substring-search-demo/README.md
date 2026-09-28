@@ -633,12 +633,14 @@ export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the sub
 variant that runs the same flow locally and additionally checks recall and precision against ground
 truth — correctness is verified there rather than in the AWS run, which measures only speed.
 
-## Performance at 10M rows, stage 2: ordering and paging
+## Performance at 10M rows, stages 2 and 3: ordering, paging and segment balancing
 
 The stage-1 run above measures containment alone: any twenty matching rows, in any order. The
-search box wants the *newest* twenty and a next page, which is what stage 2 adds. Serving that
-means the index can no longer stop at the first twenty matches; it has to know which twenty are
-the newest. This section is one run of the same SCT test on the stage-3 branches, 2026-09-27,
+search box wants the *newest* twenty and a next page, which is what stage 2 adds (`ORDER BY`,
+the range, the cursor, the segment cap, two-pass verification); stage 3 adds the background
+rewrite that repairs an index created on an already loaded table. Serving an order means the
+index can no longer stop at the first twenty matches; it has to know which twenty are the
+newest. This section is one run of the same SCT test on the stage-3 branches, 2026-09-27,
 with the ordered query of section 6a and the paging of section 6c, on the same cluster shape as
 before (1 × `i4i.xlarge` ScyllaDB, 1 × `c8g.xlarge` Vector Store with 4 cores, 1 × `c5.2xlarge`
 loader; run `20260926-220437-885482`, eu-west-1). It is one run, not a benchmark.
@@ -795,9 +797,10 @@ About 3 h 40 min end to end. The `names_10M_backfill` dataset is the same corpus
 name (`ln -s names_10M data_dir/latte/substring_search/names_10M_backfill`), so that the two
 after-the-load indexes get a load of their own.
 
-## Known limits of the branch (stage 2)
+## Known limits of the branch (stage 3)
 
-Ordering, the range and paging are in; keeping them *fast* on a large table is not.
+Ordering, the range, paging, the segment cap and the rewrite are in; what follows is what is
+not, or not yet measured.
 
 - **Ordered queries are fast only with the segment cap on, and an index added to a loaded table
   only after its rewrite.** Both are opt-in placeholders today (`poc_option_2`, `poc_option_3`)
