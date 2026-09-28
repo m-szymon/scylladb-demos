@@ -633,6 +633,76 @@ export SCT_UNIFIED_PACKAGE=<url of the scylla unified tarball built from the sub
 variant that runs the same flow locally and additionally checks recall and precision against ground
 truth — correctness is verified there rather than in the AWS run, which measures only speed.
 
+## Performance at 10M rows, stage 2: the first ordered runs (2026-09-25)
+
+This section is what the stage-2 branches measured on 2026-09-25, the evening the segment cap
+was written: the runs that found the fixed per-query cost, rejected the FAST primary id, and
+showed the cap at work. The one-run comparison of the next section repeats the cap variants
+against the default with the two-pass verification in and adds stage 3. It was measured on the
+same cluster shape as the stage-1 run (1 × `i4i.xlarge` ScyllaDB, 1 × `c8g.xlarge` Vector Store
+with 4 cores, 1 × `c5.2xlarge` loader), with the ordered query of section 6a and the paging of
+section 6c. Several runs in one evening, one cluster shape, no repeats: a feasibility check.
+
+### The design in one paragraph
+
+The index keeps the names in chunks, called segments, and each segment knows the oldest and
+newest `register_time` it holds. An ordered query visits segments newest-first and skips every
+segment that cannot hold anything newer than the page already has, so a deep page costs what
+the first page costs. That only works if each segment covers a narrow slice of time, which is
+not what an index does on its own: it merges chunks by size, regardless of what they hold.
+`poc_option_2`, a row cap per segment, makes the index merge only neighbours in time and never
+past the cap, so rows that arrive in time order stay in slices of time. Long keywords get a
+separate improvement: a keyword longer than `max_gram` yields candidates that each need their
+stored name read to confirm the match, and the index sorts the candidates by time first and
+confirms from the newest down, stopping as soon as the page cannot change. Design and
+reasoning:
+[`vector-store/docs/dev/substring/stage-2-ordering.md`](../vector-store/docs/dev/substring/stage-2-ordering.md).
+
+### What was measured
+
+Three indexes created before the load and fed by the same CDC stream: Tantivy's default merging,
+the cap at 250,000 rows, the cap at 100,000 rows. Every index was asked the same questions for
+120 s each, 20 rows per page, 10,000 queries per second offered with 64 in flight. The walk is
+the Vector Store's own count of microseconds in the index per query; the throughput is what
+`latte` achieved.
+
+| | default | cap 250k | cap 100k |
+|---|---|---|---|
+| segments, mean span, widest | 16, 10.8%, 35.7% | 41, 3.3%, 5.2% | 100, 1.0%, 1.0% |
+| caught up after the load | 15 s | 15 s | 15 s |
+| 2-char keyword, page 1 | 10.2k/s, 28 µs | 9.6k/s, 111 µs | 9.8k/s, 81 µs |
+| 2-char keyword, unthrottled | — | 9.7k/s | 10.1k/s |
+| 2-char keyword, deep page (cursor at the median) | 3.1k–4.5k/s on earlier layouts | 9.75k/s, 168 µs | **9.85k/s, 76 µs** |
+| 1-char keyword | — | 10.0k/s | 10.0k/s |
+| 4-char keyword (verified) | — | 9.6k/s, 112 stored names read | 5.8k/s, 207 read |
+
+What it settled:
+
+- **The cap is what makes deep pages cheap.** On the default layout a deep page landed in a
+  1.3M-row segment and scanned 76,000 postings; with the 100k cap it scans 3,000 and costs what
+  page 1 costs, the design's claim. Neither cap slowed ingestion.
+- **Page 1 had a fixed cost of about 450 µs** before this run's fixes: every query opened every
+  segment's sort column to read its bounds. Caching the columns per segment removed it; the
+  numbers above are with the cache.
+- **A `FAST` primary-id column is not worth its bytes** (`poc_option_1`, measured 3.9k/s against
+  7.1k/s on the same load): resolving the page from the store costs 20 µs.
+- **The verified path was the one shape below target**: 207 stored names read for a 4-character
+  keyword at the 100k cap, because a single narrow newest segment scanned in ascending time
+  order makes every later candidate beat the page. The two-pass verification (confirm from the
+  newest down, stop when the page cannot change) is on this branch; its measurement at 10M is in
+  the stage-3 report (40 reads, 10.0k/s).
+
+### Reproducing
+
+```sh
+cd scylla-cluster-tests
+export SCT_ENABLE_ARGUS=false
+export SCT_UNIFIED_PACKAGE=<presigned url of the scylla unified tarball built from the stage-2 branch>
+export SCT_SEARCH_TEST_CONFIG=data_dir/latte/substring_search/aws_page1_config.yaml
+./docker/env/hydra.sh run-test substring_test.SubstringSearchTest.test_substring_search \
+    --backend aws --config test-cases/substring-search/substring-search-test.yaml
+```
+
 ## Performance at 10M rows, stages 2 and 3: ordering, paging and segment balancing
 
 The stage-1 run above measures containment alone: any twenty matching rows, in any order. The
