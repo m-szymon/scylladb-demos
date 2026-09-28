@@ -889,7 +889,10 @@ not, or not yet measured.
   (stage 4); but the order among the tied rows is the index node's, can change when the index
   is rebuilt, and a cursor whose row was deleted meanwhile returns the tied rows again rather
   than skip any. A client that must not see a repeat dedupes on the primary key.
-- **Only the one column the index was created with**, `ASC` or `DESC` (stage 4).
+- **Only the one column the index was created with**, `ASC` or `DESC` (stage 4). Stage 4 has
+  passed the 3000-name docker smoke (2026-09-28, run `8247ff98`: every shape with zero errors,
+  ground truth held, ascending and windowed pages full, prefix and suffix pages smaller than
+  containment as expected) and is not measured at 10M.
 - **The sort-key encoding is written twice**, once in ScyllaDB and once in the Vector Store, and the
   two must agree bit for bit -- the node stores the key that ScyllaDB produces a bound for. A
   disagreement would filter on one ordering and sort by another, dropping rows from the middle of a

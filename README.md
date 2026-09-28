@@ -9,27 +9,28 @@ This file is the handover: what exists, what it measured, how to run it, and wha
 
 | path | branch on the fork | what it is |
 |---|---|---|
-| [scylladb](scylladb) | `substring-index-stage3` | the `substring_index` custom index class, the CQL routing of `LIKE '%keyword%'`, `ORDER BY`, the range on the ordered column, cursor paging, and the placeholder index options |
-| [vector-store](vector-store) | `substring-index-stage3` | the index node: n-gram index, ordered walk with segment pruning, two-pass verification, the range merge policy (P3a), the rewrite of wide segments (P3b), metrics |
-| [scylla-cluster-tests](scylla-cluster-tests) | `substring-search-perf-stage3` | the benchmark: corpus generator, plans, index variants per dataset, layout and per-query counters |
+| [scylladb](scylladb) | `substring-index-stage4` | the `substring_index` custom index class, the CQL routing of `LIKE '%keyword%'` (and `'keyword%'`, `'%keyword'`), `ORDER BY` either way, the range on the ordered column, cursor paging, and the placeholder index options |
+| [vector-store](vector-store) | `substring-index-stage4` | the index node: n-gram index, ordered walk with segment pruning, two-pass verification, the range merge policy (P3a), the rewrite of wide segments (P3b), metrics |
+| [scylla-cluster-tests](scylla-cluster-tests) | `substring-search-perf-stage4` | the benchmark: corpus generator, plans, index variants per dataset, layout and per-query counters |
 | [substring-search-demo](substring-search-demo) | | a two-container demo of every supported query, and the plain-language report of all runs |
 
 All three forks are `m-szymon/...`; `upstream` in each checkout is the ScyllaDB repository.
 
-## The three stages
+## The four stages
 
 Each stage is a set of branches (one per repository, plus a branch of this superproject that pins
 them) and each contains the previous one. The names are `substring-index` / `substring-search-perf`
-for stage 1, and the same with `-stage2` and `-stage3` after them.
+for stage 1, and the same with `-stage2`, `-stage3` and `-stage4` after them.
 
 | stage | what it added | measured |
 |---|---|---|
 | 1 | containment: `LIKE '%keyword%' LIMIT n` answered by the index node, any order | 2026-09-22: 9.6k queries/s, bounded by ScyllaDB's row reads |
 | 2 | `ORDER BY` newest-first, a range on the ordered column, cursor paging; the segment cap (`poc_option_2`) that keeps deep pages cheap; two-pass verification of long keywords; per-query counters | 2026-09-25 (design note) and 2026-09-27 (demo README) |
 | 3 | the background rewrite (`poc_option_3`) that repairs an index created on an already loaded table; names and keywords up to 32 characters | 2026-09-27 and 2026-09-28 (demo README) |
+| 4 | correctness: the cursor names its row so tied sort values page without gaps, `ORDER BY ... ASC`, prefix and suffix `LIKE` | 2026-09-28: the docker smoke only (3000 names); not run at 10M |
 
 The scylladb branch is the same commit for stages 2 and 3: stage 3 is index-node and benchmark
-work only. The demo README on this branch reports every run; the stage-2 branch of this
+work only. Stage 4 changes all three again. The demo README on this branch reports every run; the stage-2 branch of this
 superproject reports the runs up to its own state.
 
 ## What to read, in order
@@ -45,10 +46,12 @@ superproject reports the runs up to its own state.
 
 ## Where it stands (2026-09-28)
 
-Implemented and unit-tested on the stage-3 branches:
+Implemented and unit-tested on the stage-4 branches:
 
-- Containment search (`LIKE '%kw%' LIMIT n`), ordered newest-first on one `order_by` column,
-  a range on that column, cursor paging through the driver's paging state.
+- Containment, prefix and suffix search (`LIKE '%kw%'`, `'kw%'`, `'%kw'` with `LIMIT n`),
+  ordered `DESC` or `ASC` on one `order_by` column, a range on that column, cursor paging
+  through the driver's paging state; the cursor carries the last row's primary key, so rows
+  sharing a sort value page without gaps.
 - Placeholder index options `poc_option_1..4` accepted by ScyllaDB and given meaning by the
   index node: `poc_option_2` a row cap per segment (the range merge policy), `poc_option_3`
   the background rewrite of wide segments, `poc_option_4` the old single-pass verification
@@ -68,6 +71,13 @@ Measured at 10M names on AWS (i4i.xlarge Scylla, 4-core c8g.xlarge index node, 2
 - **Open:** the rewrite's last-slices fix (`vector-store` commit `a6cfcf7`) is reproduced
   in-process and not re-measured at 10M; the run meant to do it was lost to a network outage.
 
+Stage 4 (2026-09-28) passed the docker smoke at 3000 names: every query shape ran with zero
+errors, ground truth held for 4-, 16- and 32-character keywords, ascending pages were full,
+prefix and suffix pages were smaller than containment pages as expected, and the rewrite
+repaired the shuffled index (31 segments, 60 ranges). The smoke does not check the returned
+order itself; that is covered by the vector-store unit tests and the ScyllaDB cqlpy tests
+against the mock. Stage 4 is not measured at 10M.
+
 Raw results of every run are on the laptop the runs were driven from, under
 `~/sct-results/<timestamp>/`, with each result row in the `argus_replay_log_*.jsonl` file there.
 The run ids are quoted in the demo README.
@@ -78,9 +88,9 @@ The run ids are quoted in the demo README.
    `aws_followup_config.yaml` (about 2 h 20 min) which also re-measures the rewrite fix.
 2. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
    whenever `order_by` is set (100k), the rewrite on by default.
-3. Correctness before review: a tie-break key in the cursor (rows sharing an `order_by` value
-   at a page boundary are skipped today), `ASC`, and typed values in the request so the sort-key
-   encoding exists in one place instead of two.
+3. Typed values in the request so the sort-key encoding exists in one place instead of two
+   (the tie-break cursor and `ASC` are done in stage 4). General `LIKE` patterns (`_`, a `%`
+   inside the keyword) stay on `ALLOW FILTERING`.
 4. Unmeasured behaviour: a rewrite under a steady stream of writes, queries during a rewrite,
    index size on a real corpus with a wide character set.
 5. Splitting the branches into reviewable pull requests.
@@ -132,10 +142,10 @@ Each submodule is a checkout on the branch named above. Push submodules first, t
 second; `push.recurseSubmodules=check` refuses a superproject push whose pins the forks lack:
 
 ```sh
-git -C scylladb             push origin substring-index-stage3
-git -C vector-store         push origin substring-index-stage3
-git -C scylla-cluster-tests push origin substring-search-perf-stage3
-git push origin substring-index-stage3
+git -C scylladb             push origin substring-index-stage4
+git -C vector-store         push origin substring-index-stage4
+git -C scylla-cluster-tests push origin substring-search-perf-stage4
+git push origin substring-index-stage4
 ```
 
 After committing in a submodule, record the new pin here:
