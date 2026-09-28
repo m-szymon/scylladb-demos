@@ -884,11 +884,12 @@ not, or not yet measured.
   map is the fix; until it is in, the cap trades long-keyword throughput for deep-page cost.
 - **The rewrite's range-width fix is not re-measured at 10M.** The run meant to do it was lost
   to a network outage on the runner's side; the in-process reproduction passes.
-- **Rows sharing a sort value are not split across a page boundary.** The cursor is a sort value
-  alone, so when several rows share one and the page ends among them, the rest are skipped. A
-  tie-break key in the cursor fixes it. With `register_time` to the millisecond this is unlikely;
-  with a coarser sort column it is not.
-- **Only `DESC`, and only the one column the index was created with.**
+- **Rows sharing a sort value come highest internal id first, which is not a CQL order.** The
+  cursor names the last row's primary key, so a page boundary among tied rows loses nothing
+  (stage 4); but the order among the tied rows is the index node's, can change when the index
+  is rebuilt, and a cursor whose row was deleted meanwhile returns the tied rows again rather
+  than skip any. A client that must not see a repeat dedupes on the primary key.
+- **Only the one column the index was created with**, `ASC` or `DESC` (stage 4).
 - **The sort-key encoding is written twice**, once in ScyllaDB and once in the Vector Store, and the
   two must agree bit for bit -- the node stores the key that ScyllaDB produces a bound for. A
   disagreement would filter on one ordering and sort by another, dropping rows from the middle of a
@@ -896,8 +897,9 @@ not, or not yet measured.
   to send typed values and let the node convert them.
 - One column per index and one `LIKE` per query. Searching nickname and username at once is two
   queries merged by the application, or a later multi-column index.
-- Only `%keyword%` is served. Prefix (`keyword%`) and general patterns keep today's
-  `ALLOW FILTERING` behaviour; an edge n-gram option for prefixes is a later stage.
+- `%keyword%`, `keyword%` and `%keyword` are served (stage 4: the index marks both ends of every
+  value, so a prefix or suffix is containment of the keyword with the mark). General patterns,
+  with `_` or a `%` inside the keyword, keep today's `ALLOW FILTERING` behaviour.
 - A containment `LIKE` combined with other restrictions is rejected even with `ALLOW FILTERING`
   (see section 8).
 - A prepared `LIKE ?` bound to a non-containment pattern fails at execution rather than falling
