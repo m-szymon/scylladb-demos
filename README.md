@@ -28,7 +28,7 @@ for stage 1, and the same with `-stage2` to `-stage5` after them.
 | 2 | `ORDER BY` newest-first, a range on the ordered column, cursor paging; the segment cap (`poc_option_2`) that keeps deep pages cheap; two-pass verification of long keywords; per-query counters | 2026-09-25 (design note) and 2026-09-27 (demo README) |
 | 3 | the background rewrite (`poc_option_3`) that repairs an index created on an already loaded table; names and keywords up to 32 characters | 2026-09-27 and 2026-09-28 (demo README) |
 | 4 | correctness: the cursor names its row so tied sort values page without gaps, `ORDER BY ... ASC`, prefix and suffix `LIKE` | 2026-09-28: the docker smoke only (3000 names); not run at 10M |
-| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | not measured; unit and mock tests only |
+| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | 2026-09-29: docker smoke passed; at 10M long keywords +23% to +52% (design note) |
 
 The scylladb branch is the same commit for stages 2 and 3: stage 3 is index-node and benchmark
 work only. Stage 4 changes all three again. The demo README on this branch reports every run; the stage-2 branch of this
@@ -85,12 +85,13 @@ The run ids are quoted in the demo README.
 
 ## What is left, in the order I would do it
 
-1. Measure stage 5 at 10M: one AWS run of `aws_followup_config.yaml` with
-   `case_sensitive: 'true'` in the test case, against the 2026-09-28 numbers for the 8, 16 and
-   32-character keywords. If it holds, the second step is to drop the stored text from the
-   index (the rewrite would re-read values from the table) and measure the size.
-2. Rare long keywords: rarest-gram-first in the walk (no new structure), then a per-segment gram
-   filter if that is not enough; measured by the same run.
+1. Rare long keywords: rarest-gram-first in the walk (no new structure), then a per-segment gram
+   filter if that is not enough. Stage 5 (measured 2026-09-29) removed the store reads, but a
+   32-character keyword still spends 2.4 ms walking all 100 segments.
+2. The rewrite at 10M is still unmeasured: the 2026-09-29 run stopped at the end of the
+   backfill's full scan when the runner lost the nodes for a minute. Collect the index node's
+   logs next time (they were not), and consider driving long runs from an AWS runner. After
+   that, drop the stored text from the index and measure the size.
 3. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
    whenever `order_by` is set (100k), the rewrite on by default.
 4. General `LIKE` patterns (`_`, a `%` inside the keyword), which stay on `ALLOW FILTERING`
