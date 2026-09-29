@@ -859,7 +859,7 @@ keyword across the 100 segments, linear in keyword length. A deep page halves it
 the segments lie above the cursor. This is a consequence of the cap: the same keyword on the
 16-segment default layout would cost a sixth of it, which is the trade the cap makes.
 
-The fix, not yet implemented: a map per index from each 3-character gram to the set of segments
+The fix as designed then (stage 5 built a simpler one, the segment skip below): a map per index from each 3-character gram to the set of segments
 that contain it, rebuilt on every reload from the segments' term dictionaries (a million grams
 times 100 bits, a few megabytes). A keyword past `max_gram` intersects its grams' sets first and
 opens only the segments that survive: three segments for a keyword matching three names instead
@@ -882,6 +882,37 @@ export SCT_SEARCH_TEST_CONFIG=data_dir/latte/substring_search/aws_variants_confi
 About 3 h 40 min end to end. The `names_10M_backfill` dataset is the same corpus under a second
 name (`ln -s names_10M data_dir/latte/substring_search/names_10M_backfill`), so that the two
 after-the-load indexes get a load of their own.
+
+## Performance at 10M rows, stage 5: where verification runs, and the segment skip (2026-09-29)
+
+Run `4ce3f8b8`, plan `aws_stage5_ab_config.yaml`, the same machines, names of 1 to 32
+characters, 20 rows a page, newest first. Two case-sensitive indexes on one table, both capped at
+100k rows a segment. On one the node verifies long keywords (`verify_candidates: 'index'`). On the
+other ScyllaDB verifies them on the rows it reads, which is the default. Every query set was
+measured once without a rate limit, for capacity, and once at a fixed rate below capacity, so
+that p99 describes a query rather than the loader's queue.
+
+| keyword | q/s, ScyllaDB verifies | q/s, node verifies | p99 below capacity, ScyllaDB / node |
+|---|---|---|---|
+| 1 char | 9,578 | 10,100 | |
+| 2 chars | 9,381 | 9,406 | 1.8 / 1.7 ms at 2,000/s |
+| 4 chars | 8,597 | 8,783 | 4.7 / 1.9 ms at 2,000/s |
+| 8 chars | 5,457 | 5,615 | 3.5 / 3.4 ms at 2,000/s |
+| 8 chars, older half | 10,275 | 10,436 | |
+| 16 chars | 5,874 | 5,850 | 4.3 / 4.0 ms at 1,000/s |
+| 32 chars | 11,913 | 11,484 | 2.4 / 2.8 ms at 500/s |
+
+- Where verification runs does not change capacity. At 4 characters ScyllaDB verifying halves
+  the index node's work, but its short pages need top-ups, which raises p99.
+- The segment skip (each segment's term dictionary is checked for the keyword's grams before the
+  segment is opened) took 32 characters from 1.7k to 11.9k q/s and 16 characters from 2.8k to
+  5.9k, against run `697ea24b` the same morning.
+- 8 and 16 characters over the whole range stay near 6k q/s. The index node's CPU is the limit
+  (about 650 us a query on 4 cores), because many segments hold every gram of such a keyword
+  without holding a match.
+
+Details and per-query index counters: the stage-5 sections of
+`vector-store/docs/dev/substring/stage-2-ordering.md`.
 
 ## Known limits of the branch (stage 3)
 
