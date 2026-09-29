@@ -85,21 +85,26 @@ The run ids are quoted in the demo README.
 
 ## What is left, in the order I would do it
 
-1. Rare long keywords: rarest-gram-first in the walk (no new structure), then a per-segment gram
+1. The stage-5 A/B run (`aws_stage5_ab_config.yaml`, about 1 h 45 min): the same index checked
+   by the node and by ScyllaDB (`verify_candidates`), each query set measured unthrottled for
+   capacity and at a fixed rate below it for latency, so that p99 describes a query rather than
+   the loader's queue. Later: let the node choose per query (many candidates in a segment: the
+   node checks; few: ScyllaDB does).
+2. Rare long keywords: rarest-gram-first in the walk (no new structure), then a per-segment gram
    filter if that is not enough. Stage 5 (measured 2026-09-29) removed the store reads, but a
    32-character keyword still spends 2.4 ms walking all 100 segments.
-2. The rewrite at 10M is still unmeasured: the 2026-09-29 run stopped at the end of the
+3. The rewrite at 10M is still unmeasured: the 2026-09-29 run stopped at the end of the
    backfill's full scan when the runner lost the nodes for a minute. Collect the index node's
    logs next time (they were not), and consider driving long runs from an AWS runner. After
    that, drop the stored text from the index and measure the size.
-3. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
+4. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
    whenever `order_by` is set (100k), the rewrite on by default.
-4. General `LIKE` patterns (`_`, a `%` inside the keyword), which stay on `ALLOW FILTERING`
+5. General `LIKE` patterns (`_`, a `%` inside the keyword), which stay on `ALLOW FILTERING`
    today. (The tie-break cursor, `ASC`, and typed range bounds so that the sort-key encoding
    lives on the node only are done in stage 4.)
-5. Unmeasured behaviour: a rewrite under a steady stream of writes, queries during a rewrite,
+6. Unmeasured behaviour: a rewrite under a steady stream of writes, queries during a rewrite,
    index size on a real corpus with a wide character set.
-6. Splitting the branches into reviewable pull requests.
+7. Splitting the branches into reviewable pull requests.
 
 ## Running things
 
