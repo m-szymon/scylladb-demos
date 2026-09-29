@@ -28,7 +28,7 @@ for stage 1, and the same with `-stage2` to `-stage5` after them.
 | 2 | `ORDER BY` newest-first, a range on the ordered column, cursor paging; the segment cap (`poc_option_2`) that keeps deep pages cheap; two-pass verification of long keywords; per-query counters | 2026-09-25 (design note) and 2026-09-27 (demo README) |
 | 3 | the background rewrite (`poc_option_3`) that repairs an index created on an already loaded table; names and keywords up to 32 characters | 2026-09-27 and 2026-09-28 (demo README) |
 | 4 | correctness: the cursor names its row so tied sort values page without gaps, `ORDER BY ... ASC`, prefix and suffix `LIKE` | 2026-09-28: the docker smoke only (3000 names); not run at 10M |
-| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | 2026-09-29: docker smoke passed; at 10M long keywords +23% to +52% (design note) |
+| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | 2026-09-29: docker smoke passed; at 10M long keywords +23% to +52%, short keywords 1-9% slower with the cause open (design note) |
 
 The scylladb branch is the same commit for stages 2 and 3: stage 3 is index-node and benchmark
 work only. Stage 4 changes all three again. The demo README on this branch reports every run; the stage-2 branch of this
