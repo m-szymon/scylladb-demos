@@ -97,10 +97,14 @@ Rules worth knowing when writing your own:
   `ALLOW FILTERING` and scans.
 - The keyword may be a bind marker, `LIKE ?`. The pattern is then checked when the statement is
   executed; a pattern the index does not serve is rejected at that point rather than scanned.
-- `LIMIT` is mandatory and at most 1000. It bounds the whole query, not one page.
-- On an index with `order_by`, the query may add `ORDER BY <that column> DESC` and a range on that
-  column (`<`, `<=`, `>`, `>=`). Only that column, and only `DESC`. Without `order_by` neither is
-  accepted, and the result order is whatever order the index returns the keys in.
+- On an index with `order_by`, the query may add `ORDER BY <that column> ASC` or `DESC` and a range
+  on that column (`<`, `<=`, `>`, `>=`). Only that column. Without `order_by` neither is accepted,
+  and the result order is whatever order the index returns the keys in.
+- `LIMIT` bounds the whole query, not one page. A paged query on an index with `order_by` needs
+  none: each page resumes from the index's cursor at a flat cost, holds at most 1000 rows, and may
+  be shorter than the page size even when more follow (drivers fetch on transparently). Everything
+  else -- an unpaged query, or any query on an index without `order_by` -- returns its whole result
+  at once and so requires a `LIMIT` of at most 1000.
 - Nothing else in the `WHERE`, no `GROUP BY`, no aggregates. A restriction the index cannot apply is
   rejected rather than dropped: these queries do no post-filtering, so accepting one and ignoring it
   would return rows that do not match.
@@ -395,11 +399,18 @@ SELECT nickname FROM search_demo.users WHERE nickname LIKE '将军%' LIMIT 20 AL
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将_来%' LIMIT 20;
   -> InvalidRequest: Cannot execute this query as it might involve data filtering ...
 
+PAGING OFF
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%';
-  -> InvalidRequest: Substring search queries require a LIMIT
+  -> InvalidRequest: Substring search queries require a LIMIT unless they are paged
 
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 1001;
-  -> InvalidRequest: Substring search queries require a LIMIT that is not greater than 1000. LIMIT was 1001
+  -> InvalidRequest: Substring search queries require a LIMIT that is not greater than 1000 unless
+     they are paged on an index with an 'order_by' option. LIMIT was 1001
+PAGING ON
+
+SELECT username FROM search_demo.users WHERE username LIKE '%ng%';
+  -> InvalidRequest: Substring search queries require a LIMIT: this index was created without an
+     'order_by' option, so its results cannot be paged
 
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND status = 0 LIMIT 20;
   -> InvalidRequest: Substring search queries cannot restrict status: only the indexed column
