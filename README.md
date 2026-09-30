@@ -28,7 +28,7 @@ for stage 1, and the same with `-stage2` to `-stage5` after them.
 | 2 | `ORDER BY` newest-first, a range on the ordered column, cursor paging; the segment cap (`poc_option_2`) that keeps deep pages cheap; two-pass verification of long keywords; per-query counters | 2026-09-25 (design note) and 2026-09-27 (demo README) |
 | 3 | the background rewrite (`poc_option_3`) that repairs an index created on an already loaded table; names and keywords up to 32 characters | 2026-09-27 and 2026-09-28 (demo README) |
 | 4 | correctness: the cursor names its row so tied sort values page without gaps, `ORDER BY ... ASC`, prefix and suffix `LIKE` | 2026-09-28: the docker smoke only (3000 names); not run at 10M |
-| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | 2026-09-29: at 10M, run `697ea24b` long keywords +23% to +52%; run `4ce3f8b8` the A/B (no capacity difference, node verifying has the better p99 at 4 characters) and the segment skip (32 characters 7x, 16 characters 2x) (design note) |
+| 5 | a keyword past `max_gram` on a case-sensitive index is checked by ScyllaDB on the rows it reads, not by the node on its stored text; range bounds travel as typed values | 2026-09-29: at 10M, run `697ea24b` long keywords +23% to +52%; run `4ce3f8b8` the A/B (no capacity difference, node verifying has the better p99 at 4 characters) and the segment skip (32 characters 7x, 16 characters 2x); 2026-09-30, run `7212926d`: the reused gram entries and the segment size sweep, every query type at 8.7k/s or more with a 200k cap (design note) |
 
 The scylladb branch is the same commit for stages 2 and 3: stage 3 is index-node and benchmark
 work only. Stage 4 changes all three again. The demo README on this branch reports every run; the stage-2 branch of this
@@ -45,7 +45,7 @@ superproject reports the runs up to its own state.
 3. [scylla-cluster-tests/docs/substring-search-test.md](scylla-cluster-tests/docs/substring-search-test.md):
    how the benchmark works, the corpora and plans, and how to run it locally and on AWS.
 
-## Where it stands (2026-09-29)
+## Where it stands (2026-09-30)
 
 Implemented and unit-tested on the stage-4 branches:
 
@@ -68,9 +68,15 @@ Measured at 10M names on AWS (i4i.xlarge Scylla, 4-core c8g.xlarge index node, 2
 - Rare long keywords (stage 5, 2026-09-29): the segment skip checks each segment's term
   dictionary for the keyword's grams before opening it. It took 32 characters from 1.7k/s to
   11.9k/s and 16 characters from 2.8k/s to 5.9k/s.
-- **Open:** 8 and 16 characters over the whole range stay at 5.5-5.9k/s, bounded by the index
-  node's CPU (about 650 us a query against a 400 us budget): at 8 characters 87 of 152 segments
-  hold every gram.
+- Segment size (2026-09-30, run `7212926d`, with the check's gram entries reused when a
+  segment is opened): with a cap of 200k rows a segment every query type runs at 8.7k/s or
+  more. The weakest is 16 characters at 8.7k. 8 characters reaches 12.1k and 32 characters
+  10.3k. The 100k cap leaves 8 and 16 characters at 7.5-7.9k, and the 400k cap drops
+  1 character to 7.5k.
+- The ~9.7k/s ceiling for 1-4 characters is ScyllaDB reading the 20 rows of a full page
+  (about 195k rows a second on one i4i.xlarge), not the index. Rare keywords go above it
+  because they have fewer matches than a page in the whole table (about 1-2.4 rows), and
+  there the index node is the limit.
 - Where verification runs (`verify_candidates`) makes no difference to capacity. At 4
   characters ScyllaDB verifying halves the node's work but raises p99 from 1.9 to 4.7 ms. p99
   at a fixed rate below capacity is 1.7-4.7 ms for every keyword length.
@@ -90,11 +96,11 @@ The run ids are quoted in the demo README.
 
 ## What is left, in the order I would do it
 
-1. Done 2026-09-29 (run `4ce3f8b8`, 1 h 24 min): the stage-5 A/B run and the segment skip for
-   rare long keywords. What stays open from it: 8 and 16 characters at about 6k/s (fewer,
-   value-tight segments or a finer per-segment filter), and letting the node choose per query
-   where verification runs. The A/B run suggests the node should verify unless candidates are
-   many and mostly false.
+1. Done 2026-09-29 and 2026-09-30 (runs `4ce3f8b8` and `7212926d`): the A/B of where
+   verification runs, the segment skip, the reused gram entries and the segment size sweep.
+   What stays open: 16 characters is the weakest query type at 8.7k/s (a cap between 200k and
+   400k may balance it against 1 character), and letting the node choose per query where
+   verification runs.
 2. The default `verify_candidates`: the measurements favour the node verifying (same capacity,
    better p99 at 4 characters). Decide whether to flip the default before the per-query choice
    exists.
@@ -103,7 +109,7 @@ The run ids are quoted in the demo README.
    are collected now. Consider driving long runs from an AWS runner. After
    that, drop the stored text from the index and measure the size.
 4. Real names and defaults for the options instead of `poc_option_N`: the cap on by default
-   whenever `order_by` is set (100k), the rewrite on by default.
+   whenever `order_by` is set (200k, from the 2026-09-30 sweep), the rewrite on by default.
 5. General `LIKE` patterns (`_`, a `%` inside the keyword), which stay on `ALLOW FILTERING`
    today. (The tie-break cursor, `ASC`, and typed range bounds so that the sort-key encoding
    lives on the node only are done in stage 4.)

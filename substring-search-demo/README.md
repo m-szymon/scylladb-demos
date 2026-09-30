@@ -914,6 +914,31 @@ that p99 describes a query rather than the loader's queue.
 Details and per-query index counters: the stage-5 sections of
 `vector-store/docs/dev/substring/stage-2-ordering.md`.
 
+## Performance at 10M rows, stage 5: segment size (2026-09-30)
+
+Run `7212926d`, plan `aws_segment_size_config.yaml`. Three case-sensitive indexes on one table
+differ only in the cap: 100k, 200k and 400k rows a segment (107, 51 and 26 segments). All three
+verify on the node and run with a segment's gram postings built from the entries the segment skip
+already found. Capacity in queries per second:
+
+| keyword | cap 100k | cap 200k | cap 400k |
+|---|---|---|---|
+| 1 char | 9,900 | 9,973 | 7,522 |
+| 2 chars | 9,680 | 9,731 | 9,597 |
+| 4 chars | 9,258 | 9,737 | 9,717 |
+| 8 chars | 7,864 | 12,094 | 18,732 |
+| 16 chars | 7,538 | 8,661 | 11,520 |
+| 32 chars | 13,357 | 10,282 | 9,083 |
+
+- **The 200k cap is the flattest.** Every query type is at 8.7k or more.
+- **Larger segments trade the two ends.** They help rare long keywords, because fewer segments are
+  opened. They cost the commonest keyword, whose posting lists get longer, and 32 characters,
+  whose ~30 grams are more often all present in a large segment.
+- **The ~9.7k ceiling for 1 to 4 characters is ScyllaDB reading a full page of 20 rows.** Rare
+  keywords go above it because the whole table holds only 1 to 2.4 matching names, so their
+  pages are complete but short.
+- **p99 below capacity** was 1.6 to 3.4 ms everywhere.
+
 ## Known limits of the branch (stage 3)
 
 Ordering, the range, paging, the segment cap and the rewrite are in; what follows is what is
