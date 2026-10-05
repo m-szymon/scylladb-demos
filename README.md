@@ -19,8 +19,32 @@ only the scaffold. Check out a demo branch for the demo itself:
 
 ```sh
 git checkout substring-index
+git submodule update --init
+# scylladb names its own submodules relative to its origin, the fork, which has none of them
+# but seastar; point them at the ScyllaDB repositories before fetching them.
+git -C scylladb submodule init
+git -C scylladb config --get-regexp '^submodule\..*\.url$' | grep m-szymon |
+    while read -r key url; do git -C scylladb config "$key" "${url/m-szymon/scylladb}"; done
 git submodule update --init --recursive
 ```
+
+The URLs are set once per clone, in `scylladb`'s own config. A demo branch whose scylladb adds a
+submodule needs the loop run again, or `git submodule update` fails to clone it from the fork.
+
+## Layout
+
+Each demo is a directory `<name>-demo/` on its branch: the CQL, a `docker-compose.yml`, a README
+with the walkthrough, and thin `build-images.sh` and `wait-for-indexes.sh` wrappers. What the
+wrappers call lives in [common](common) and is the same for every demo:
+
+| file | what it does |
+|---|---|
+| [common/build-images.sh](common/build-images.sh) | `<demo> [scylla-src] [vector-store-src]`: builds `localhost/scylla-<demo>:dev` and `localhost/vector-store-<demo>:dev` from the submodules |
+| [common/Dockerfile.vector-store](common/Dockerfile.vector-store), [common/vector-store.dockerignore](common/vector-store.dockerignore) | the Vector Store image |
+| [common/wait-for-indexes.sh](common/wait-for-indexes.sh) | `[-u url] [-t timeout] <keyspace> <index>...`: waits until the Vector Store serves every listed index |
+
+The demos all publish ports 9042 and 6080, so run one at a time: `podman-compose down -v` in one
+before `up` in another.
 
 ## Working with the submodules
 
