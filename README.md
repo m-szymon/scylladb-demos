@@ -16,6 +16,7 @@ only the scaffold. Check out a demo branch for the demo itself:
 | branch | what it adds |
 |---|---|
 | `substring-index` | substring (infix) search: `WHERE column LIKE '%keyword%'` answered from an n-gram index instead of a scan, with a runnable demo and an AWS benchmark |
+| `hybrid-search` | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting, as a runnable demo ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580)) |
 
 ```sh
 git checkout substring-index

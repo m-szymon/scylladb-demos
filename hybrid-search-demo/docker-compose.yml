@@ -1,0 +1,44 @@
+# Single-node ScyllaDB (built from the hybrid-search branch) + Vector Store (built from master),
+# both from this branch's submodules. Both images are built locally by ./build-images.sh; nothing
+# here is pulled from a registry.
+services:
+  scylla:
+    image: localhost/scylla-hybrid:dev
+    container_name: hybrid-demo-scylla
+    command: >
+      --smp 2
+      --memory 1G
+      --overprovisioned 1
+      --developer-mode 1
+      --vector-store-primary-uri http://vector-store:6080
+      --experimental-features udf
+      --enable-user-defined-functions 1
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./:/demo:z,ro
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT now() FROM system.local'"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    networks:
+      - hybrid-net
+
+  vector-store:
+    image: localhost/vector-store-hybrid:dev
+    container_name: hybrid-demo-vector-store
+    environment:
+      VECTOR_STORE_URI: "0.0.0.0:6080"
+      VECTOR_STORE_SCYLLADB_URI: "scylla:9042"
+    ports:
+      - "6080:6080"
+    depends_on:
+      scylla:
+        condition: service_healthy
+    networks:
+      - hybrid-net
+
+networks:
+  hybrid-net:
+    driver: bridge

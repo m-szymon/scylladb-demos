@@ -1,7 +1,7 @@
 [submodule "scylladb"]
 	path = scylladb
 	url = https://github.com/m-szymon/scylladb.git
-	branch = master
+	branch = hybrid-search
 [submodule "vector-store"]
 	path = vector-store
 	url = https://github.com/m-szymon/vector-store.git
