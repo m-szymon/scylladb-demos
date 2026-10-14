@@ -16,7 +16,7 @@ only the scaffold. Check out a demo branch for the demo itself:
 | branch | what it adds |
 |---|---|
 | `substring-index` | substring (infix) search: `WHERE column LIKE '%keyword%'` answered from an n-gram index instead of a scan, with a runnable demo and an AWS benchmark |
-| `hybrid-search` | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting, as a runnable demo ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580)) |
+| `hybrid-search` | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting, as a runnable demo ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580), merged) |
 
 ```sh
 git checkout substring-index
@@ -36,11 +36,19 @@ submodule needs the loop run again, or `git submodule update` fails to clone it 
 
 Each demo is a directory `<name>-demo/` on its branch: the CQL, a `docker-compose.yml`, a README
 with the walkthrough, and thin `build-images.sh` and `wait-for-indexes.sh` wrappers. What the
-wrappers call lives in [common](common) and is the same for every demo:
+wrappers call lives in [common](common) and is the same for every demo.
+
+A demo's `docker-compose.yml` takes its images from `SCYLLA_IMAGE` and `VECTOR_STORE_IMAGE`. While
+the demo needs code no published image has, the default is the local image `build-images.sh` builds
+from the submodule; once the code is published (a nightly is enough), the default becomes that
+image, pinned by tag, with the submodule pinned on the same commit. Either side can be on its own:
+`--only` builds just one.
+
+
 
 | file | what it does |
 |---|---|
-| [common/build-images.sh](common/build-images.sh) | `<demo> [scylla-src] [vector-store-src]`: builds `localhost/scylla-<demo>:dev` and `localhost/vector-store-<demo>:dev` from the submodules |
+| [common/build-images.sh](common/build-images.sh) | `[--only scylla\|vector-store] <demo> [scylla-src] [vector-store-src]`: builds `localhost/scylla-<demo>:dev` and `localhost/vector-store-<demo>:dev` from the submodules |
 | [common/Dockerfile.vector-store](common/Dockerfile.vector-store), [common/vector-store.dockerignore](common/vector-store.dockerignore) | the Vector Store image |
 | [common/wait-for-indexes.sh](common/wait-for-indexes.sh) | `[-u url] [-t timeout] <keyspace> <index>...`: waits until the Vector Store serves every listed index |
 

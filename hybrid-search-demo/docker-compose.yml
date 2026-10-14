@@ -1,9 +1,10 @@
-# Single-node ScyllaDB (built from the hybrid-search branch) + Vector Store (built from master),
-# both from this branch's submodules. Both images are built locally by ./build-images.sh; nothing
-# here is pulled from a registry.
+# Single-node ScyllaDB + Vector Store from published images: the scylla-nightly build of the
+# scylladb submodule's commit and the vector-store release the vector-store submodule is pinned on.
+# SCYLLA_IMAGE and VECTOR_STORE_IMAGE override them, e.g. with the localhost/scylla-hybrid:dev and
+# localhost/vector-store-hybrid:dev that ./build-images.sh builds from the submodules.
 services:
   scylla:
-    image: localhost/scylla-hybrid:dev
+    image: ${SCYLLA_IMAGE:-docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261013.09445539ad64}
     container_name: hybrid-demo-scylla
     command: >
       --smp 2
@@ -26,7 +27,7 @@ services:
       - hybrid-net
 
   vector-store:
-    image: localhost/vector-store-hybrid:dev
+    image: ${VECTOR_STORE_IMAGE:-docker.io/scylladb/vector-store:1.12.0}
     container_name: hybrid-demo-vector-store
     environment:
       VECTOR_STORE_URI: "0.0.0.0:6080"

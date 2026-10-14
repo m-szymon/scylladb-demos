@@ -1,7 +1,7 @@
 # Hybrid search demo: ANN + BM25 + highlighting in one CQL query
 
-A small, self-contained demo of ScyllaDB's `hybrid-search` branch
-([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580)): one `SELECT` served by several
+A small, self-contained demo of ScyllaDB's hybrid search
+([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580), merged to master): one `SELECT` served by several
 external searches at once, vector (ANN) and full-text (BM25), fused with reciprocal-rank fusion,
 reporting every search's own score and rank and highlighting the matched text.
 
@@ -11,16 +11,25 @@ containers.
 ## What you need
 
 - `podman` (rootless is fine), `buildah`, and `podman-compose`. (`docker-compose` works too once the podman socket is up: `systemctl --user start podman.socket`.)
-- The submodules of this branch, checked out: `git submodule update --init --recursive`.
-  `scylladb` is pinned on the `hybrid-search` branch, `vector-store` on an upstream master commit
-  that has the `/highlight` endpoint (master from 2026-08-24 on). No released image has either,
-  which is why both images are built locally. Other checkouts can be passed to `build-images.sh`.
+
+Both images are published, so nothing is built:
+
+- ScyllaDB `docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261013.09445539ad64`, the nightly
+  build of master at `09445539ad`, which has the hybrid search merge. No release has it yet.
+- Vector Store `docker.io/scylladb/vector-store:1.12.0`, the latest release (the `/highlight`
+  endpoint the demo needs is there since 1.11.0).
+
+The `scylladb` and `vector-store` submodules are pinned on the commits of these images, for
+reading the code. To run the demo on other checkouts, build images from them with
+`./build-images.sh [scylla-src] [vector-store-src]` and point the compose file at them:
+
+```sh
+SCYLLA_IMAGE=localhost/scylla-hybrid:dev VECTOR_STORE_IMAGE=localhost/vector-store-hybrid:dev podman-compose up -d
+```
 
 ## Set-up
 
 ```sh
-./build-images.sh [scylla-src] [vector-store-src]   # builds localhost/scylla-hybrid:dev and
-                                                    # localhost/vector-store-hybrid:dev
 podman-compose up -d                                # scylla first, vector store when scylla is healthy
 podman-compose exec scylla cqlsh -f /demo/schema.cql
 podman-compose exec scylla cqlsh -f /demo/data.cql
@@ -52,7 +61,7 @@ The vectors are three topic axes, `[databases, animals, cooking]`, so a query ve
 row ([data.cql](data.cql)).
 
 The vector indexes keep the default `f32` quantization. That leaves rescoring off, so the rank a
-query reports is the Vector Store's own; a rescored index reports rank `0` on this branch.
+query reports is the Vector Store's own; a rescored index reports rank `0` for now.
 
 ## The functions
 
@@ -352,7 +361,7 @@ SELECT id, BM25_SCORE(title, 'fast') AS s FROM demo.articles ORDER BY ANN(body_v
   -> InvalidRequest: BM25_SCORE() in SELECT must match a BM25 search in ORDER BY, with the same column and search term; ORDER BY has no BM25 search
 ```
 
-## Known limits of the branch (proof of concept)
+## Known limits
 
 - A rescored vector index (`quantization` other than `f32` with `rescoring = 'true'`) reports rank `0`.
 - Fused queries take no `WHERE` clause.
