@@ -22,6 +22,8 @@ Check out a demo branch for a demo on code that is not upstream yet:
 | branch | what it adds |
 |---|---|
 | `substring-index` | substring (infix) search: `WHERE column LIKE '%keyword%'` answered from an n-gram index instead of a scan, with a runnable demo and an AWS benchmark |
+| `substring-index-stage2` .. `-stage5` | the same proof of concept, stage by stage: ordering, paging, segment balancing, verification; the record of the AWS runs |
+| `pattern-index-poc` | the proof of concept moved onto the `pattern_index` that ScyllaDB now has upstream (see below) |
 
 ```sh
 git checkout substring-index
@@ -36,6 +38,27 @@ git submodule update --init --recursive
 
 The URLs are set once per clone, in `scylladb`'s own config. A demo branch whose scylladb adds a
 submodule needs the loop run again, or `git submodule update` fails to clone it from the fork.
+
+## This branch: `pattern-index-poc`
+
+ScyllaDB master has `pattern_index`, which sends any `LIKE` on its column to the Vector Store's
+`/like` with the pattern as written, in one unordered page. The Vector Store master indexes the
+values as framed 1-3 character n-grams, on tantivy code it shares with full-text search, but does
+not answer `/like` yet. This branch carries the substring-search proof of concept (the
+`substring-index*` branches) onto those, on a `pattern-index-poc` branch in each submodule, based on
+its upstream master (scylla-cluster-tests: on the full-text benchmark it extends, see below):
+
+| repository | what the branch adds to upstream |
+|---|---|
+| vector-store | `/like` on the upstream index: the node reads the pattern with ScyllaDB's `LIKE` rules and serves `'%kw%'`, `'kw%'` and `'%kw'`; the n-gram sizes and case folding as options; with `order_by`, ordering, ranges and cursor paging; the segment cap and the rewrite; the segment skip; verification that a caller may decline. The shared tantivy code gains what that needs: per-index state, its own documents and merge policy, and a reload on demand |
+| scylladb | the options (`order_by`, `min_gram`, `max_gram`, `segment_rows`, `rewrite`, `verify_candidates`), and a statement for an index with `order_by`: `ORDER BY` on that column, a range on it, paging through the driver's paging state, the LIMIT rules, and verification by ScyllaDB's own `LIKE` when asked; the index depends on its `order_by` column, so that column cannot be dropped or renamed while the index exists |
+| scylla-cluster-tests | the full-text and substring search benchmarks, the latter on `pattern_index` with the new option names; based on upstream master of 2026-10-15, since the open full-text benchmark PRs it builds on (#15719, #15769) are not rebased yet |
+
+The option names replace the placeholders of the proof of concept: `segment_rows` (was
+`poc_option_2`, 200000 by default with `order_by`) and `rewrite` (was `poc_option_3`, on wherever
+there is a cap); the node verifies by default. The measurements in
+[substring-search-demo/README.md](substring-search-demo/README.md) were taken on the
+`substring-index*` branches; the port is not measured yet.
 
 ## Layout
 
