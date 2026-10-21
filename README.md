@@ -1,8 +1,9 @@
 # ScyllaDB demos
 
 A workspace for demos that span more than one ScyllaDB repository. Each demo needs a matching
-checkout of several repositories at once, so this superproject pins them together as submodules
-and each demo lives on its own branch.
+checkout of several repositories at once, so this superproject pins them together as submodules.
+A demo on code that is not upstream yet lives on its own branch; once its code is merged and
+published, it moves to `main` and runs on the published images.
 
 | path | what it is |
 |---|---|
@@ -10,13 +11,17 @@ and each demo lives on its own branch.
 | [vector-store](vector-store) | the index node that serves vector, full-text and substring search |
 | [scylla-cluster-tests](scylla-cluster-tests) | SCT, the test and benchmark harness |
 
-On `main` the three are pinned at upstream commits with no demo work in them, so this branch is
-only the scaffold. Check out a demo branch for the demo itself:
+On `main` the three are pinned at upstream commits, with the demos whose code is all upstream:
+
+| demo | what it shows |
+|---|---|
+| [hybrid-search-demo](hybrid-search-demo) | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580)) |
+
+Check out a demo branch for a demo on code that is not upstream yet:
 
 | branch | what it adds |
 |---|---|
 | `substring-index` | substring (infix) search: `WHERE column LIKE '%keyword%'` answered from an n-gram index instead of a scan, with a runnable demo and an AWS benchmark |
-| `hybrid-search` | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting, as a runnable demo ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580), merged) |
 
 ```sh
 git checkout substring-index
@@ -34,7 +39,7 @@ submodule needs the loop run again, or `git submodule update` fails to clone it 
 
 ## Layout
 
-Each demo is a directory `<name>-demo/` on its branch: the CQL, a `docker-compose.yml`, a README
+Each demo is a directory `<name>-demo/`, on `main` or on its branch: the CQL, a `docker-compose.yml`, a README
 with the walkthrough, and thin `build-images.sh`, `wait-for-indexes.sh` and `present.sh` wrappers. What the
 wrappers call lives in [common](common) and is the same for every demo.
 
