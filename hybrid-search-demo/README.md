@@ -43,6 +43,31 @@ deliberately failing statements of section 8, which cqlsh reports and moves past
 
 Tear down with `podman-compose down -v`.
 
+### Presenting it live
+
+`./present.sh`, after the set-up above, opens cqlsh with the statements of `demo.cql` one key press
+away, so that nothing is pasted or typed during the talk. `./present.sh 0-7` presents only those
+sections, here everything but the guard rails of section 8:
+
+| key | |
+|---|---|
+| PgDn (or Alt-n) | types the next statement without running it; pressed again, runs it |
+| PgUp (or Alt-p) | types the previous statement again |
+| Alt-r | types the current statement again |
+| Ctrl-D | leaves cqlsh, which ends the session |
+
+PgDn and PgUp are what a presentation clicker sends, so a clicker drives the whole demo. Comments are
+skipped, the `EXPAND` settings are applied on their own, the screen is cleared before each statement
+(`PRESENT_CLEAR=0 ./present.sh` keeps the previous output), and the status line shows the section and
+the position. The mouse wheel scrolls back through long output. If the terminal closes, running
+`./present.sh` again returns to the same statement. It runs on a tmux server of its own, so it needs
+`tmux` but leaves other tmux sessions alone.
+
+Its cqlsh is not the container's: it is the PyPI `scylla-cqlsh`, run by `uv` on the host against the
+published port 9042, through [common/cqlsh-quiet.py](../common/cqlsh-quiet.py), which drops cqlsh's
+`Failed to format value` reports. The values themselves print the same; errors from the server
+still show. So it also needs `uv`, and network access the first time, to fetch the package.
+
 ## The schema
 
 `demo.articles` has two text columns and two vector columns, one index on each
@@ -99,10 +124,11 @@ sections project the halves, to introduce them. A search that did not find a row
 `(null, null)`, which cqlsh prints as `(None, None)`. cqlsh also prints a harmless
 `Failed to format value (None, None)` line after such a result: a cqlsh formatting bug with nulls
 inside a tuple, not a server error; section 0 gets a similar
-`Unexpected number of subtypes 3 - [float, 3]` line for the vector columns. The excerpt queries are
+`Unexpected number of subtypes 3 - [float, 3]` line for the vector columns (`./present.sh` drops
+these lines, see below). The excerpt queries are
 run with `EXPAND ON` in [demo.cql](demo.cql); the tables below are the `EXPAND OFF` view.
 
-### 1. One vector search: the pair and its halves
+### 1. One vector search: score and rank
 
 ```sql
 SELECT id, title, ANN(body_vec, [0.1, 0.8, 0.1]) AS hit,
@@ -228,10 +254,36 @@ SELECT id, title, BM25(title, 'database') AS title_hit, BM25(body, 'index') AS b
 ```
 
 Two searches, two requests, one to each full-text index. Row 7 is found by both and wins; row 1 is
-found only by the title search, so its body pair is `(None, None)` and, in the `EXPAND ON` variant
-that adds `BM25_HIGHLIGHT(body, 'index')`, its excerpt is `null`.
+found only by the title search, so its body pair is `(None, None)`. With an excerpt from each text
+search, the highlighted title takes the place of the title column:
 
-### 6. Three searches, two excerpts
+```sql
+SELECT id, BM25_HIGHLIGHT(title, 'database') AS title_excerpt, BM25(title, 'database') AS title_hit,
+       BM25_HIGHLIGHT(body, 'index') AS body_excerpt, BM25(body, 'index') AS body_hit
+  FROM demo.articles ORDER BY RRF(BM25(title, 'database'), BM25(body, 'index')) LIMIT 5;
+```
+```
+@ Row 1
+---------------+--------------------------------------------------------------------------------------------------------------------------------
+ id            | 7
+ title_excerpt | <b>Database</b> indexes explained
+ title_hit     | (1.30224, 1)
+ body_excerpt  | An <b>index</b> speeds up lookups in a database. A full-text <b>index</b> ranks documents with BM25, while a vector <b>index</b> ranks them by similarity to a query
+ body_hit      | (2.73711, 1)
+
+@ Row 2
+---------------+--------------------------------------------------------------------------------------------------------------------------------
+ id            | 1
+ title_excerpt | ScyllaDB is a fast distributed <b>database</b>
+ title_hit     | (1.14929, 2)
+ body_excerpt  | null
+ body_hit      | (None, None)
+```
+
+Each excerpt belongs to its own search: row 1's body excerpt is `null` because its body does not
+contain `index`, while its title does contain `database`.
+
+### 6. Three searches
 
 ```sql
 SELECT id, title, ANN(body_vec, [0, 0, 1]) AS cooking_hit,
@@ -249,23 +301,7 @@ SELECT id, title, ANN(body_vec, [0, 0, 1]) AS cooking_hit,
   7 | Database indexes explained | (0.621268, 4) | (None, None) | (None, None)
 ```
 
-Row 8 is the only one all three searches agree on. The `EXPAND ON` variant adds an excerpt per
-text search:
-
-```
-@ Row 4
----------------+-------------------------------------------------------------------------------------------------------------------------------------
- id            | 3
- title         | The quick brown fox
- cooking_hit   | (None, None)
- title_hit     | (None, None)
- title_excerpt | null
- body_hit      | (2.69194, 2)
- body_excerpt  | The quick brown fox jumps over the <b>lazy</b> <b>dog</b>. Foxes are fast and clever hunters that live at the edge of the forest
-```
-
-Each excerpt belongs to its own search: the title excerpt is `null` for row 3 because its title does
-not match, while its body does.
+Row 8 is the only one all three searches agree on.
 
 ### 7. Your own fusion function
 
@@ -301,8 +337,9 @@ SELECT id, title, ANN(body_vec, [0.1, 0.8, 0.1]) AS ann_hit, BM25(body, 'fast') 
 Weighting scores 80/20 rather than fusing ranks lifts the vector-only row 8 above the text hits
 5 and 1, which RRF put ahead of it in section 3.
 The same function selected in the `SELECT` list shows the value the rows were ranked by. A column
-can be an argument too; `demo.blend_boost(..., 0.8, id)` in [demo.cql](demo.cql) adds the row's id
-to the score and reorders the result by id.
+can be an argument too; [demo.cql](demo.cql) then creates `demo.blend_boost`, which adds a fourth
+argument to the score, and calls it as `demo.blend_boost(..., 0.8, id)`: the row's id reorders the
+result by id.
 
 ### 8. Guard rails
 

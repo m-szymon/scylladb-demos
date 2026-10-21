@@ -35,7 +35,7 @@ submodule needs the loop run again, or `git submodule update` fails to clone it 
 ## Layout
 
 Each demo is a directory `<name>-demo/` on its branch: the CQL, a `docker-compose.yml`, a README
-with the walkthrough, and thin `build-images.sh` and `wait-for-indexes.sh` wrappers. What the
+with the walkthrough, and thin `build-images.sh`, `wait-for-indexes.sh` and `present.sh` wrappers. What the
 wrappers call lives in [common](common) and is the same for every demo.
 
 A demo's `docker-compose.yml` takes its images from `SCYLLA_IMAGE` and `VECTOR_STORE_IMAGE`. While
@@ -51,6 +51,8 @@ image, pinned by tag, with the submodule pinned on the same commit. Either side 
 | [common/build-images.sh](common/build-images.sh) | `[--only scylla\|vector-store] <demo> [scylla-src] [vector-store-src]`: builds `localhost/scylla-<demo>:dev` and `localhost/vector-store-<demo>:dev` from the submodules |
 | [common/Dockerfile.vector-store](common/Dockerfile.vector-store), [common/vector-store.dockerignore](common/vector-store.dockerignore) | the Vector Store image |
 | [common/wait-for-indexes.sh](common/wait-for-indexes.sh) | `[-u url] [-t timeout] <keyspace> <index>...`: waits until the Vector Store serves every listed index |
+| [common/cqlsh-quiet.py](common/cqlsh-quiet.py) | cqlsh without its `Failed to format value` reports, for `present.sh`; run with `uv run --with scylla-cqlsh` |
+| [common/present.sh](common/present.sh) | `<demo> <cql-file> <cqlsh-command>...`: cqlsh in a tmux session of its own, PgDn typing and then running the file's next statement, for presenting a demo live |
 
 The demos all publish ports 9042 and 6080, so run one at a time: `podman-compose down -v` in one
 before `up` in another.

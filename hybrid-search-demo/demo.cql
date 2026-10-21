@@ -19,7 +19,8 @@
 -- result: a cqlsh formatting bug with nulls inside a tuple, not an error from the server.
 
 -- ---------------------------------------------------------------------------------------------
--- 0. The data: eight articles, three topics. Vectors are [databases, animals, cooking].
+-- 0. The data
+--    Eight articles, three topics. Vectors are [databases, animals, cooking].
 -- ---------------------------------------------------------------------------------------------
 -- Everything, one row per block...
 EXPAND ON;
@@ -30,7 +31,8 @@ EXPAND OFF;
 SELECT id, title, title_vec, body_vec FROM demo.articles;
 
 -- ---------------------------------------------------------------------------------------------
--- 1. One vector search: the pair and its two halves. Query vector = "animals".
+-- 1. One vector search: score and rank
+--    Query vector = "animals".
 -- ---------------------------------------------------------------------------------------------
 EXPAND OFF;
 SELECT id, title,
@@ -42,10 +44,11 @@ SELECT id, title,
  LIMIT 4;
 
 -- ---------------------------------------------------------------------------------------------
--- 2. One full-text search: the score, the rank and an excerpt for every hit.
---    A single BM25 search needs both the WHERE and the ORDER BY clause.
+-- 2. One full-text search: score, rank, excerpt
+--    The score, the rank and an excerpt for every hit. A single BM25 search needs both the WHERE
+--    and the ORDER BY clause.
 -- ---------------------------------------------------------------------------------------------
--- The two halves projected on their own...
+-- The pair and its two halves...
 EXPAND OFF;
 SELECT id, title,
        BM25(body, 'fast')           AS hit,
@@ -56,14 +59,7 @@ SELECT id, title,
  ORDER BY BM25(body, 'fast')
  LIMIT 5;
 
--- ...the same search reported as the (score, rank) pair, in one column...
-SELECT id, title, BM25(body, 'fast') AS hit
-  FROM demo.articles
- WHERE BM25(body, 'fast') > 0
- ORDER BY BM25(body, 'fast')
- LIMIT 5;
-
--- ...and with an excerpt, one row per block.
+-- ...and the pair with an excerpt, one row per block.
 EXPAND ON;
 SELECT id, title,
        BM25(body, 'fast')           AS hit,
@@ -74,9 +70,10 @@ SELECT id, title,
  LIMIT 5;
 
 -- ---------------------------------------------------------------------------------------------
--- 3. Hybrid: a vector search ("animals") and a full-text search ('fast') fused. Rows found by
---    both searches (the fast animals) come first; rows found by only one follow, with null in
---    the other search's column and no excerpt for a row the text search did not match.
+-- 3. Hybrid: vector search + full-text search
+--    A vector search ("animals") and a full-text search ('fast') fused. Rows found by both
+--    searches (the fast animals) come first; rows found by only one follow, with null in the other
+--    search's column and no excerpt for a row the text search did not match.
 -- ---------------------------------------------------------------------------------------------
 -- Table view first, without the excerpt, so that the ranking is easy to read...
 EXPAND OFF;
@@ -98,7 +95,8 @@ SELECT id, title,
  LIMIT 6;
 
 -- ---------------------------------------------------------------------------------------------
--- 4. Two vector searches fused: titles near "databases", bodies near "cooking".
+-- 4. Two vector searches fused
+--    Titles near "databases", bodies near "cooking".
 -- ---------------------------------------------------------------------------------------------
 EXPAND OFF;
 SELECT id, title,
@@ -109,9 +107,10 @@ SELECT id, title,
  LIMIT 5;
 
 -- ---------------------------------------------------------------------------------------------
--- 5. Two full-text searches fused: 'database' in the title, 'index' in the body.
---    Each search is one request to its own index; a row either search found comes back, with
---    null where the other search did not find it. No WHERE clause: RRF decides what is a hit.
+-- 5. Two full-text searches fused
+--    'database' in the title, 'index' in the body. Each search is one request to its own index;
+--    a row either search found comes back, with null where the other search did not find it.
+--    No WHERE clause: RRF decides what is a hit.
 -- ---------------------------------------------------------------------------------------------
 -- Table view first, without the excerpt, so that the ranking is easy to read...
 EXPAND OFF;
@@ -122,21 +121,22 @@ SELECT id, title,
  ORDER BY RRF(BM25(title, 'database'), BM25(body, 'index'))
  LIMIT 5;
 
--- ...then the same search with the excerpt, one row per block.
+-- ...then the same search with an excerpt from each text search, one row per block. The title
+-- excerpt is the whole title, highlighted, so it takes the place of the title column.
 EXPAND ON;
-SELECT id, title,
-       BM25(title, 'database')       AS title_hit,
-       BM25(body, 'index')           AS body_hit,
-       BM25_HIGHLIGHT(body, 'index') AS body_excerpt
+SELECT id,
+       BM25_HIGHLIGHT(title, 'database') AS title_excerpt,
+       BM25(title, 'database')           AS title_hit,
+       BM25_HIGHLIGHT(body, 'index')     AS body_excerpt,
+       BM25(body, 'index')               AS body_hit
   FROM demo.articles
  ORDER BY RRF(BM25(title, 'database'), BM25(body, 'index'))
  LIMIT 5;
 
 -- ---------------------------------------------------------------------------------------------
--- 6. Three searches at once: bodies near "cooking", plus 'lazy dog' in the title and in the body,
---    with an excerpt from each text search.
+-- 6. Three searches
+--    Bodies near "cooking", plus 'lazy dog' in the title and in the body.
 -- ---------------------------------------------------------------------------------------------
--- Table view first, without the excerpts, so that the ranking is easy to read...
 EXPAND OFF;
 SELECT id, title,
        ANN(body_vec, [0, 0, 1])  AS cooking_hit,
@@ -146,24 +146,15 @@ SELECT id, title,
  ORDER BY RRF(ANN(body_vec, [0, 0, 1]), BM25(title, 'lazy dog'), BM25(body, 'lazy dog'))
  LIMIT 5;
 
--- ...then the same search with the excerpts, one row per block.
-EXPAND ON;
-SELECT id, title,
-       ANN(body_vec, [0, 0, 1])          AS cooking_hit,
-       BM25(title, 'lazy dog')           AS title_hit,
-       BM25_HIGHLIGHT(title, 'lazy dog') AS title_excerpt,
-       BM25(body, 'lazy dog')            AS body_hit,
-       BM25_HIGHLIGHT(body, 'lazy dog')  AS body_excerpt
-  FROM demo.articles
- ORDER BY RRF(ANN(body_vec, [0, 0, 1]), BM25(title, 'lazy dog'), BM25(body, 'lazy dog'))
- LIMIT 5;
-
 -- ---------------------------------------------------------------------------------------------
--- 7. Your own fusion function. The ordering may be any function call that names at least one
---    search and answers with a float, so a UDF taking the (score, rank) pairs works, with extra
---    arguments: constants, or even a column of the row. (UDFs are enabled in docker-compose.yml
---    with --experimental-features udf --enable-user-defined-functions 1.)
+-- 7. Your own fusion function
+--    The ordering may be any function call that names at least one search and answers with a
+--    float, so a UDF taking the (score, rank) pairs works, with extra arguments: constants, or
+--    even a column of the row. (UDFs are enabled in docker-compose.yml with
+--    --experimental-features udf --enable-user-defined-functions 1.)
 -- ---------------------------------------------------------------------------------------------
+EXPAND OFF;
+-- Weighted score fusion: 80% vector similarity, 20% BM25 score, the fused value selected too.
 CREATE OR REPLACE FUNCTION demo.blend(a frozen<tuple<float, int>>, b frozen<tuple<float, int>>, w float)
   CALLED ON NULL INPUT RETURNS float LANGUAGE lua AS $$
     local sa = (a and a[1]) or 0
@@ -171,15 +162,6 @@ CREATE OR REPLACE FUNCTION demo.blend(a frozen<tuple<float, int>>, b frozen<tupl
     return w * sa + (1 - w) * sb
   $$;
 
-CREATE OR REPLACE FUNCTION demo.blend_boost(a frozen<tuple<float, int>>, b frozen<tuple<float, int>>, w float, boost int)
-  CALLED ON NULL INPUT RETURNS float LANGUAGE lua AS $$
-    local sa = (a and a[1]) or 0
-    local sb = (b and b[1]) or 0
-    return w * sa + (1 - w) * sb + (boost or 0)
-  $$;
-
--- Weighted score fusion: 80% vector similarity, 20% BM25 score, the fused value selected too.
-EXPAND OFF;
 SELECT id, title,
        ANN(body_vec, [0.1, 0.8, 0.1]) AS ann_hit,
        BM25(body, 'fast')             AS bm25_hit,
@@ -189,6 +171,13 @@ SELECT id, title,
  LIMIT 6;
 
 -- A column of the row as an extra argument: here the id acts as a boost.
+CREATE OR REPLACE FUNCTION demo.blend_boost(a frozen<tuple<float, int>>, b frozen<tuple<float, int>>, w float, boost int)
+  CALLED ON NULL INPUT RETURNS float LANGUAGE lua AS $$
+    local sa = (a and a[1]) or 0
+    local sb = (b and b[1]) or 0
+    return w * sa + (1 - w) * sb + (boost or 0)
+  $$;
+
 SELECT id, title,
        demo.blend_boost(ANN(body_vec, [0.1, 0.8, 0.1]), BM25(body, 'fast'), 0.8, id) AS boosted
   FROM demo.articles
@@ -196,7 +185,8 @@ SELECT id, title,
  LIMIT 6;
 
 -- ---------------------------------------------------------------------------------------------
--- 8. Guard rails: what is refused, and why.
+-- 8. Guard rails
+--    What is refused, and why.
 -- ---------------------------------------------------------------------------------------------
 EXPAND OFF;
 -- A search is identified by its kind and its column, so two BM25 terms, or two ANN vectors, on one
