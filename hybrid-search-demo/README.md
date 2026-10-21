@@ -14,9 +14,9 @@ containers.
 
 Both images are published, so nothing is built:
 
-- ScyllaDB `docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261013.09445539ad64`, the nightly
-  build of master at `09445539ad`, which has the hybrid search merge. No release has it yet.
-- Vector Store `docker.io/scylladb/vector-store:1.12.0`, the latest release (the `/highlight`
+- ScyllaDB `docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261020.5e0d3eb88f8e`, the nightly
+  build of master at `5e0d3eb88f`, which has the hybrid search merge. No release has it yet.
+- Vector Store `docker.io/scylladb/vector-store:1.13.0`, the latest release (the `/highlight`
   endpoint the demo needs is there since 1.11.0).
 
 The `scylladb` and `vector-store` submodules are pinned on the commits of these images, for

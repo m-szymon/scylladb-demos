@@ -4,7 +4,7 @@
 # localhost/vector-store-hybrid:dev that ./build-images.sh builds from the submodules.
 services:
   scylla:
-    image: ${SCYLLA_IMAGE:-docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261013.09445539ad64}
+    image: ${SCYLLA_IMAGE:-docker.io/scylladb/scylla-nightly:2026.4.0-dev-0.20261020.5e0d3eb88f8e}
     container_name: hybrid-demo-scylla
     command: >
       --smp 2
@@ -27,7 +27,7 @@ services:
       - hybrid-net
 
   vector-store:
-    image: ${VECTOR_STORE_IMAGE:-docker.io/scylladb/vector-store:1.12.0}
+    image: ${VECTOR_STORE_IMAGE:-docker.io/scylladb/vector-store:1.13.0}
     container_name: hybrid-demo-vector-store
     environment:
       VECTOR_STORE_URI: "0.0.0.0:6080"
