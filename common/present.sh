@@ -21,7 +21,8 @@
 # the same statement. Leaving cqlsh ends it.
 #
 # -s presents only the given sections, by the numbers of their "-- N. title" comments: a list of
-# numbers and ranges such as 0-7 or 1,3,5-6.
+# numbers and ranges such as 0-7 or 1,3,5-6. A lettered section ("-- 6a. title") counts as its
+# number.
 #
 # Usage: common/present.sh [-s sections] <demo> <cql-file> <cqlsh-command>...
 set -euo pipefail
@@ -151,7 +152,7 @@ awk -v dir="$state" -v sections="$sections" '
     !in_stmt {
         if ($0 ~ /^[[:space:]]*$/) next
         if ($0 ~ /^[[:space:]]*--/) {
-            if ($0 ~ /^-- [0-9]+\. /) {
+            if ($0 ~ /^-- [0-9]+[a-z]?\. /) {
                 section = substr($0, 4)
                 keep = sections == "" || ((section + 0) in wanted)
             }
