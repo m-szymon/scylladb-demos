@@ -1,0 +1,47 @@
+<section id="three-layers" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">A test is three files and a config stack</h2>
+</div>
+<div style="display:flex;gap:48px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Test class</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">longevity_test.py</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Python. Inherits the cluster tester, decides what to run and what to report.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Test-case YAML</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">test-cases/longevity/longevity-10gb-3h.yaml</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Node counts, sizing, stress command, duration, metadata. Most changes stop here.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Jenkins pipeline</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">jenkins-pipelines/oss/longevity/longevity-10gb-3h.jenkinsfile</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Binds the YAML to a backend, a region and a pipeline template.</p>
+</div>
+</div>
+<div style="width:640px;display:flex;flex-direction:column;gap:0">
+<p style="font-size:26px;color:#687797;font-weight:600;text-transform:uppercase;letter-spacing:2px;padding:0 0 16px">Config layers, top wins</p>
+<div style="background:#101225;color:#f5f9fd;padding:24px 32px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">SCT_* environment</p>
+<p style="font-size:24px;color:#41deff">Argus extra vars</p>
+</div>
+<div style="background:#005988;color:#f5f9fd;padding:24px 32px;border-top:none;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Extra --config files</p>
+<p style="font-size:24px;color:#d1dff3">from the jenkinsfile or your command line</p>
+</div>
+<div style="background:#0079b3;color:#f5f9fd;padding:24px 32px;border-top:none;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Test-case YAML</p>
+<p style="font-size:24px;color:#d1dff3">test-cases/…</p>
+</div>
+<div style="background:#00a0d7;color:#101225;padding:24px 32px;border-top:none;border-radius:0 0 12px 12px;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Defaults</p>
+<p style="font-size:24px;color:#101225">defaults/ per backend</p>
+</div>
+<p style="font-size:24px;color:#465271;line-height:1.4;padding:20px 0 0">The extra variables typed into Argus in Part 1 sit on top of this stack. Every option is documented in docs/configuration_options.md.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Walkthrough for a new test: docs/writing-a-test.md.</p>
+<aside>Open the longevity YAML live and point at test_metadata, the stress command, node counts and the sizing block. Then show one option in the configuration reference. The message: if you only change a value, you touch the YAML or an env var, never Python.</aside>
+</section>

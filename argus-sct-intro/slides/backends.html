@@ -1,0 +1,18 @@
+<section id="backends" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Backends: one command, one flag</h2>
+</div>
+<p style="font-size:30px;font-family:'Roboto Mono', 'Courier New', monospace;background:#101225;color:#f5f9fd;padding:24px 32px;border-radius:12px">hydra run-test &lt;module.Class.test&gt; --backend &lt;backend&gt; --config test-cases/&lt;case&gt;.yaml</p>
+<table style="font-size:26px;color:#101225;width:1664px">
+<tr style="background:#101225"><th style="width:22%;color:#f5f9fd;text-align:left;padding:14px 24px">Backend</th><th style="width:38%;color:#f5f9fd;text-align:left">What it is</th><th style="width:40%;color:#f5f9fd;text-align:left">Notes</th></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">aws · gce · azure · oci</td><td style="color:#465271">Public clouds, real VMs</td><td style="color:#465271">aws most used, gce for artifacts and upgrades. From a laptop add the public-IP network config.</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">xcloud</td><td style="color:#465271">ScyllaDB Cloud managed clusters</td><td style="color:#465271">Provider and environment set by env vars</td></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">k8s-eks · k8s-gke · k8s-local-kind</td><td style="color:#465271">Scylla Operator on Kubernetes</td><td style="color:#465271">Managed clusters, or kind locally or on one VM</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">baremetal</td><td style="color:#465271">Hosts that already exist, such as lab machines</td><td style="color:#465271">Inventory from a JSON file or the keystore</td></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">docker</td><td style="color:#465271">Containers on your machine</td><td style="color:#465271">Not every nemesis works, see docs</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">minicloud (aws or gce)</td><td style="color:#465271">Emulated cloud APIs, KVM guests</td><td style="color:#465271">Same backend code as the real cloud, no instance cost</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Per-backend settings and docs: README section 3 and docs/configuration_options.md.</p>
+<aside>Do not read the table aloud. Point at the command on top: the backend is a flag plus credentials, everything else in the test stays the same. Mention that minicloud is not a backend name but a way to run the aws or gce backend locally.</aside>
+</section>

@@ -1,0 +1,68 @@
+/* Renders the slide files (one <section> per slide, 1920x1080 canvas, inline styles)
+   on screen and for print. Defaults mirror the slide format the sections were written for. */
+
+@font-face { font-family: "Roboto Flex"; src: url("../assets/fonts/roboto-flex.woff2") format("woff2"); font-weight: 100 1000; }
+@font-face { font-family: "Roboto Mono"; src: url("../assets/fonts/roboto-mono.woff2") format("woff2"); font-weight: 100 900; }
+
+html, body { margin: 0; padding: 0; background: #0a0b16; }
+* { box-sizing: border-box; }
+
+/* ---- slide canvas ---- */
+.deck > section {
+  position: relative;
+  width: 1920px; height: 1080px;
+  overflow: hidden;
+  font-size: 32px; line-height: 1.4;
+}
+section h1, section h2, section h3, section p, section ul, section ol { margin: 0; }
+section h1 { font-size: 96px; font-weight: 600; line-height: 1.1; }
+section h2 { font-size: 64px; font-weight: 600; line-height: 1.15; }
+section h3 { font-size: 44px; font-weight: 600; line-height: 1.2; }
+section p  { font-size: 32px; font-weight: 400; line-height: 1.4; }
+section ul, section ol { padding-left: 1.2em; }
+section li { margin: 0; }
+section b { font-weight: 700; }
+section img { display: block; }
+section div { min-width: 0; }
+section aside { display: none; }
+section a { color: inherit; text-decoration: underline; text-decoration-color: rgba(65, 222, 255, 0.6); text-underline-offset: 6px; }
+
+/* flex rows: children share the row evenly only when the slide says so (flex:1) */
+section div[style*="display:flex"] > * { flex-shrink: 1; }
+
+/* tables */
+section table { border-collapse: collapse; }
+section th, section td { padding: 0.35em 0.6em; border: 1px solid rgba(16, 18, 37, 0.14); vertical-align: top; }
+section th { font-weight: 700; }
+
+/* ---- custom elements ---- */
+x-shape { display: block; }
+x-shape[kind="arrow-right"] { clip-path: polygon(0 28%, 60% 28%, 60% 0, 100% 50%, 60% 100%, 60% 72%, 0 72%); }
+x-shape[kind="arrow-left"]  { clip-path: polygon(100% 28%, 40% 28%, 40% 0, 0 50%, 40% 100%, 40% 72%, 100% 72%); }
+x-shape[kind="ellipse"]     { border-radius: 50%; }
+x-icon { display: inline-block; flex: none; }
+x-icon svg { width: 100%; height: 100%; display: block; }
+x-connector { display: none; }               /* replaced by an svg overlay */
+svg.connector { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+
+/* ---- screen mode: one slide at a time, scaled to the window ---- */
+@media screen {
+  body { height: 100vh; overflow: hidden; }
+  .deck { position: absolute; left: 50%; top: 50%; transform-origin: center center; width: 1920px; height: 1080px; margin: -540px 0 0 -960px; }
+  .deck > section { display: none; }
+  .deck > section.current { display: flex; }
+  .deck > section.current[style*="display:grid"] { display: grid; }
+  #hud { position: fixed; right: 16px; bottom: 12px; color: #687797; font: 14px/1.4 "Roboto Flex", Arial, sans-serif; z-index: 10; }
+  #notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 34vh; overflow: auto; background: rgba(16,18,37,0.96); color: #d1dff3; padding: 16px 24px; font: 18px/1.5 "Roboto Flex", Arial, sans-serif; display: none; z-index: 9; border-top: 2px solid #00a0d7; }
+  body.notes #notes { display: block; }
+}
+
+/* ---- print mode: every slide is one page ---- */
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  html, body { background: #fff; }
+  .deck { position: static !important; width: 1920px; margin: 0 !important; transform: none !important; }
+  .deck > section { display: flex !important; page-break-after: always; break-after: page; }
+  .deck > section[style*="display:grid"] { display: grid !important; }
+  #hud, #notes { display: none !important; }
+}

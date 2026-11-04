@@ -17,6 +17,12 @@ On `main` the three are pinned at upstream commits, with the demos whose code is
 |---|---|
 | [hybrid-search-demo](hybrid-search-demo) | hybrid search: one `SELECT` ordered by several vector (ANN) and full-text (BM25) searches fused with RRF, with highlighting ([scylladb/scylladb#31580](https://github.com/scylladb/scylladb/pull/31580)) |
 
+Presentations that go with the demos, kept as slide sources plus a built PDF:
+
+| path | what it is |
+|---|---|
+| [argus-sct-intro](argus-sct-intro) | team intro to Argus and SCT: reading a test page, running and cloning tests, how Argus, Jenkins and SCT fit together, ways to run a test ([deck.pdf](argus-sct-intro/deck.pdf)) |
+
 Check out a demo branch for a demo on code that is not upstream yet:
 
 | branch | what it adds |

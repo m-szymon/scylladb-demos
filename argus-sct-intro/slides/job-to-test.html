@@ -1,0 +1,26 @@
+<section id="job-to-test" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 2 · under the hood</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">A Jenkins job is a small file in the SCT repo</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:stretch">
+<div style="width:760px;display:flex;flex-direction:column;gap:16px;background:#101225;color:#f5f9fd;padding:40px;border-radius:16px">
+<p style="font-size:24px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">jenkins-pipelines/oss/longevity/longevity-10gb-3h.jenkinsfile</p>
+<p style="font-size:28px;font-family:'Roboto Mono', 'Courier New', monospace;line-height:1.6">longevityPipeline(<br>&#160;&#160;backend: 'aws',<br>&#160;&#160;region: 'eu-west-1',<br>&#160;&#160;test_name: 'longevity_test.LongevityTest.test_custom_time',<br>&#160;&#160;test_config: 'test-cases/longevity/longevity-10gb-3h.yaml',<br>)</p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">That is the whole job: which shared pipeline, which backend, which test class, which YAML. The Argus test is a page that points at this job.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px;justify-content:center">
+<p style="font-size:26px;color:#687797;font-weight:600;text-transform:uppercase;letter-spacing:2px">What the pipeline does on every build</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">1</p><p style="font-size:28px;color:#101225">Create the run in Argus</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">2</p><p style="font-size:28px;color:#101225">Create an SCT runner VM in the cloud</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">3</p><p style="font-size:28px;color:#101225">Run hydra there with the job’s settings plus yours</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">4</p><p style="font-size:28px;color:#101225">Collect logs, clean up resources</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">5</p><p style="font-size:28px;color:#101225">Report final status to Argus and by e-mail</p></div>
+</div>
+<p style="font-size:26px;color:#465271;line-height:1.4">Steps 4 and 5 run even when the test fails or is aborted.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Shared pipelines live in vars/ in the SCT repo. More in docs/sct-pipelines.md.</p>
+<aside>The one idea: a job is a few lines that bind a pipeline template to a test class and a YAML. Argus adds a page on top of it: it discovers jobs from Jenkins, and the folder definitions file next to the jenkinsfiles tells it which plugin and which Run wizard to use. Clone in Argus goes the other way: it creates a new Jenkins job from an existing one, and the page comes with it. The numbered list is what happens when you press Run, and the runner in step 2 is why a Jenkins run has no laptop involved. The jenkinsfile snippet is simplified; open the real file if someone asks.</aside>
+</section>

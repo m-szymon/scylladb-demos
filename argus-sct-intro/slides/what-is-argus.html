@@ -1,0 +1,45 @@
+<section id="what-is-argus" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 2 · under the hood</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Argus tracks. Jenkins executes. SCT reports.</h2>
+</div>
+<div style="position:relative;width:1664px;height:610px">
+<div style="position:absolute;left:0;top:0;width:480px;height:520px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#41deff">Argus</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The tracker. Knows releases, groups, tests and runs. Stores status, events, results, log links, comments, issues.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>release</p>
+<p style="padding:0 0 0 32px">group</p>
+<p style="padding:0 0 0 64px">test</p>
+<p style="padding:0 0 0 96px">run</p>
+</div>
+</div>
+<div style="position:absolute;left:592px;top:0;width:480px;height:520px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#41deff">Jenkins</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The executor. A folder of jobs, each a jenkinsfile from the SCT repo. A build runs hydra on a runner and passes parameters as environment.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>folder</p>
+<p style="padding:0 0 0 32px">job</p>
+<p style="padding:0 0 0 64px">build</p>
+</div>
+</div>
+<div style="position:absolute;left:1184px;top:0;width:480px;height:520px;background:#161a34;border:2px solid #f29300;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#f29300">SCT run</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The test itself, on cloud machines. Uses the Argus client from the repo to send events, results and log archives while running.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>runner</p>
+<p style="padding:0 0 0 32px">db · loaders · monitor</p>
+</div>
+</div>
+<x-connector x1="480" y1="120" x2="592" y2="120" head="end" style="color:#41deff;border-width:4px"></x-connector>
+<x-connector x1="1072" y1="120" x2="1184" y2="120" head="end" style="color:#41deff;border-width:4px"></x-connector>
+<x-connector x1="1424" y1="520" x2="1424" y2="570" head="none" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="1424" y1="570" x2="240" y2="570" head="none" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="240" y1="570" x2="240" y2="520" head="end" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<p style="position:absolute;left:464px;top:52px;width:160px;font-size:22px;color:#41deff;text-align:center">trigger + params</p>
+<p style="position:absolute;left:1052px;top:52px;width:160px;font-size:22px;color:#41deff;text-align:center">build runs hydra</p>
+<p style="position:absolute;left:532px;top:578px;width:600px;font-size:22px;color:#f29300;text-align:center">events, results, logs, status, straight from the run</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">A run in Argus and a build in Jenkins are the same thing seen from two sides. The Jenkins link on the run header takes you across.</p>
+<aside>Three boxes, two directions. Left to right is control: Argus triggers a Jenkins build with parameters, the build runs SCT inside hydra. Right to left is reporting: SCT talks to Argus directly during the run, not through Jenkins. That is why a run can show events and partial results while Jenkins still says in progress.</aside>
+</section>

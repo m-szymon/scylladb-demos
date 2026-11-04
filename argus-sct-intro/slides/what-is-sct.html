@@ -1,0 +1,51 @@
+<section id="what-is-sct" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">One SCT run, end to end</h2>
+</div>
+<div style="position:relative;width:1664px;height:420px">
+<div style="position:absolute;left:0;top:80px;width:300px;height:240px;background:#161a34;border:2px solid #f29300;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:700;color:#f29300">Runner</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Hydra container. Runs the test class, drives everything over SSH.</p>
+</div>
+<div style="position:absolute;left:420px;top:0px;width:360px;height:170px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">DB cluster</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">ScyllaDB nodes under test, plus any sidecar the test needs.</p>
+</div>
+<div style="position:absolute;left:420px;top:200px;width:360px;height:170px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">Loaders</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">cassandra-stress, latte, scylla-bench, ycsb.</p>
+</div>
+<div style="position:absolute;left:900px;top:110px;width:360px;height:180px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">Monitor</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Scylla Monitoring stack for the cluster and loaders.</p>
+</div>
+<div style="position:absolute;left:1380px;top:80px;width:284px;height:240px;background:#161a34;border:2px solid #687797;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#d1dff3">Shared</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Argus, S3 for logs, Elasticsearch, cloud account.</p>
+</div>
+<x-connector x1="300" y1="160" x2="420" y2="85" head="end" style="color:#f29300;border-width:4px"></x-connector>
+<x-connector x1="300" y1="240" x2="420" y2="285" head="end" style="color:#f29300;border-width:4px"></x-connector>
+<x-connector x1="780" y1="85" x2="900" y2="200" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="780" y1="285" x2="900" y2="200" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="150" y1="320" x2="150" y2="400" head="none" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="150" y1="400" x2="1522" y2="400" head="none" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="1522" y1="400" x2="1522" y2="320" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<p style="position:absolute;left:900px;top:330px;width:460px;font-size:22px;color:#687797;text-align:center">runner reports events, results and log archives</p>
+</div>
+<div style="display:flex;gap:16px;align-items:center">
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">provision</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">install + configure</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">run workload</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">inject faults</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">collect logs</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">tear down</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">The SCT README has a generated system map per test type (docs/system-map) that shows exactly this for performance, longevity, upgrade and others.</p>
+<aside>Everything a run needs is created by the run and destroyed at the end. The runner is the only piece that runs SCT code; the rest are plain machines it drives over SSH, and the runner is also the one talking to Argus and S3. Faults are nemesis, used by longevity tests and usually skipped by performance tests. If time allows, open the interactive system map from the repo.</aside>
+</section>

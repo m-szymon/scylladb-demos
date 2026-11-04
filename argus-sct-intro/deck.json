@@ -1,0 +1,21 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-11-04T09:00:00Z"},
+  "lists": "css",
+  "title": "Argus and SCT Intro",
+  "cover": "cover",
+  "order": ["cover", "agenda", "part1-live", "what-is-argus", "job-to-test", "what-is-sct", "three-layers", "ways-to-run", "backends", "edit-or-write", "links"],
+  "sections": {
+    "s1": {"description": "Argus in practice, shown live on the FTS search test.", "start": "cover"},
+    "s2": {"description": "What Argus is and how it relates to Jenkins.", "start": "what-is-argus"},
+    "s3": {"description": "What SCT is, how a test is built, and other ways to run it.", "start": "what-is-sct"},
+    "s4": {"description": "Links to keep.", "start": "links"}
+  },
+  "faces": {
+    "roboto-flex": {"family": "Roboto Flex", "src": "project/ds/scylladbdesignsystemagora_41d48a/fonts/roboto-flex.woff2"},
+    "roboto-mono": {"family": "Roboto Mono", "src": "project/ds/scylladbdesignsystemagora_41d48a/fonts/roboto-mono.woff2"}
+  },
+  "designSystems": [
+    {"title": "ScyllaDB Design System (Agora)", "namespace": "scylladbdesignsystemagora_41d48a", "artifact": "https://claude.ai/artifact/Ab3VqtStSBwordK2RK4oae", "version": "1793696674-f2db", "copiedAt": "2026-11-04T09:00:00Z"}
+  ]
+}

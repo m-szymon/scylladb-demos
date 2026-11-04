@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argus and SCT Intro</title>
+<link rel="stylesheet" href="viewer/deck.css">
+</head>
+<body>
+<div class="deck">
+<section id="cover" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<x-shape kind="rect" style="position:absolute;left:0;top:0;width:24px;height:1080px;background:#00a0d7"></x-shape>
+<div style="display:flex;align-items:center;gap:20px">
+<img src="assets/logo-white.svg" alt="ScyllaDB" style="width:320px;height:64px;object-fit:contain">
+</div>
+<div style="display:flex;flex-direction:column;gap:32px">
+<p style="font-size:32px;color:#41deff;font-weight:600;letter-spacing:2px;text-transform:uppercase">Team session · November 2026</p>
+<h1 style="font-size:120px;font-weight:700;line-height:1.05;width:1500px">Argus and SCT</h1>
+<p style="font-size:44px;color:#d1dff3;width:1400px;line-height:1.3">From reading a test page in Argus to running, adjusting and writing SCT tests.</p>
+</div>
+<div style="display:flex;gap:48px;font-size:28px;color:#687797">
+<p>Part 1 · Argus, live</p>
+<p>Part 2 · Argus and Jenkins</p>
+<p>Part 3 · SCT</p>
+</div>
+<aside>Goal of the session: after it, everyone can run an existing test, read its results, change its parameters, and know where to start when editing or writing one. Roughly 30 minutes, three live blocks.</aside>
+</section>
+
+<section id="agenda" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:56px">
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Three parts</h2>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#101225;color:#f5f9fd;padding:48px;border-radius:16px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 1 · live</p>
+<h3 style="font-size:44px;font-weight:700">Argus in practice</h3>
+<p style="font-size:30px;line-height:1.5;color:#d1dff3">Shown in the browser, no slides: a test page, one run, the Run button, and Clone.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#e6f0fb;padding:48px;border-radius:16px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 2 · under the hood</p>
+<h3 style="font-size:44px;font-weight:700">Argus and Jenkins</h3>
+<ul style="font-size:30px;line-height:1.5;color:#465271">
+<li>Tracker vs executor</li>
+<li>A job is a small file</li>
+<li>How SCT reports back</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#e6f0fb;padding:48px;border-radius:16px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h3 style="font-size:44px;font-weight:700">Inside a test</h3>
+<ul style="font-size:30px;line-height:1.5;color:#465271">
+<li>What one run does</li>
+<li>Class, YAML, pipeline</li>
+<li>Ways to run, backends</li>
+<li>Edit or write a test</li>
+</ul>
+</div>
+</div>
+<p style="font-size:32px;color:#465271">Examples come from the performance tests we run, where they are general enough.</p>
+<aside>Say why this order: start with what people will touch every week, the Argus page. Theory comes after they have seen the thing it explains.</aside>
+</section>
+
+<section id="part1-live" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<x-shape kind="rect" style="position:absolute;left:0;top:0;width:24px;height:1080px;background:#00a0d7"></x-shape>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 1 · live in Argus</p>
+<h2 style="font-size:96px;font-weight:700;line-height:1.05">Switching to the browser</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:#161a34;padding:32px 36px;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+<p style="font-size:26px;color:#41deff;font-weight:700">1</p>
+<p style="font-size:30px;color:#f5f9fd;line-height:1.3">Read a test page</p>
+</div>
+<div style="flex:1;background:#161a34;padding:32px 36px;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+<p style="font-size:26px;color:#41deff;font-weight:700">2</p>
+<p style="font-size:30px;color:#f5f9fd;line-height:1.3">Read one run: events, results, logs</p>
+</div>
+<div style="flex:1;background:#161a34;padding:32px 36px;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+<p style="font-size:26px;color:#41deff;font-weight:700">3</p>
+<p style="font-size:30px;color:#f5f9fd;line-height:1.3">Run again with changed parameters</p>
+</div>
+<div style="flex:1;background:#161a34;padding:32px 36px;border-radius:16px;display:flex;flex-direction:column;gap:12px">
+<p style="font-size:26px;color:#41deff;font-weight:700">4</p>
+<p style="font-size:30px;color:#f5f9fd;line-height:1.3">Get your own page by cloning</p>
+</div>
+</div>
+<aside>Keep this slide up while switching to Argus. Follow the demo checklist: test page (run list, filters, release and group it belongs to), one run (header with versions and Jenkins link, events by severity, results tables and graphs across runs, logs tab, costs, comments and investigation status, linked issues), Run button (generic parameters, extra environment variables as SCT_ options, start), Clone (name, group, Jenkins job path). Come back to the slides for Part 2.</aside>
+</section>
+
+<section id="what-is-argus" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 2 · under the hood</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Argus tracks. Jenkins executes. SCT reports.</h2>
+</div>
+<div style="position:relative;width:1664px;height:610px">
+<div style="position:absolute;left:0;top:0;width:480px;height:520px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#41deff">Argus</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The tracker. Knows releases, groups, tests and runs. Stores status, events, results, log links, comments, issues.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>release</p>
+<p style="padding:0 0 0 32px">group</p>
+<p style="padding:0 0 0 64px">test</p>
+<p style="padding:0 0 0 96px">run</p>
+</div>
+</div>
+<div style="position:absolute;left:592px;top:0;width:480px;height:520px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#41deff">Jenkins</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The executor. A folder of jobs, each a jenkinsfile from the SCT repo. A build runs hydra on a runner and passes parameters as environment.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>folder</p>
+<p style="padding:0 0 0 32px">job</p>
+<p style="padding:0 0 0 64px">build</p>
+</div>
+</div>
+<div style="position:absolute;left:1184px;top:0;width:480px;height:520px;background:#161a34;border:2px solid #f29300;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:36px;font-weight:700;color:#f29300">SCT run</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">The test itself, on cloud machines. Uses the Argus client from the repo to send events, results and log archives while running.</p>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#f5f9fd">
+<p>runner</p>
+<p style="padding:0 0 0 32px">db · loaders · monitor</p>
+</div>
+</div>
+<x-connector x1="480" y1="120" x2="592" y2="120" head="end" style="color:#41deff;border-width:4px"></x-connector>
+<x-connector x1="1072" y1="120" x2="1184" y2="120" head="end" style="color:#41deff;border-width:4px"></x-connector>
+<x-connector x1="1424" y1="520" x2="1424" y2="570" head="none" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="1424" y1="570" x2="240" y2="570" head="none" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<x-connector x1="240" y1="570" x2="240" y2="520" head="end" style="color:#f29300;border-width:4px;border-style:dashed"></x-connector>
+<p style="position:absolute;left:464px;top:52px;width:160px;font-size:22px;color:#41deff;text-align:center">trigger + params</p>
+<p style="position:absolute;left:1052px;top:52px;width:160px;font-size:22px;color:#41deff;text-align:center">build runs hydra</p>
+<p style="position:absolute;left:532px;top:578px;width:600px;font-size:22px;color:#f29300;text-align:center">events, results, logs, status, straight from the run</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">A run in Argus and a build in Jenkins are the same thing seen from two sides. The Jenkins link on the run header takes you across.</p>
+<aside>Three boxes, two directions. Left to right is control: Argus triggers a Jenkins build with parameters, the build runs SCT inside hydra. Right to left is reporting: SCT talks to Argus directly during the run, not through Jenkins. That is why a run can show events and partial results while Jenkins still says in progress.</aside>
+</section>
+
+<section id="job-to-test" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 2 · under the hood</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">A Jenkins job is a small file in the SCT repo</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:stretch">
+<div style="width:760px;display:flex;flex-direction:column;gap:16px;background:#101225;color:#f5f9fd;padding:40px;border-radius:16px">
+<p style="font-size:24px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">jenkins-pipelines/oss/longevity/longevity-10gb-3h.jenkinsfile</p>
+<p style="font-size:28px;font-family:'Roboto Mono', 'Courier New', monospace;line-height:1.6">longevityPipeline(<br>&#160;&#160;backend: 'aws',<br>&#160;&#160;region: 'eu-west-1',<br>&#160;&#160;test_name: 'longevity_test.LongevityTest.test_custom_time',<br>&#160;&#160;test_config: 'test-cases/longevity/longevity-10gb-3h.yaml',<br>)</p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">That is the whole job: which shared pipeline, which backend, which test class, which YAML. The Argus test is a page that points at this job.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px;justify-content:center">
+<p style="font-size:26px;color:#687797;font-weight:600;text-transform:uppercase;letter-spacing:2px">What the pipeline does on every build</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">1</p><p style="font-size:28px;color:#101225">Create the run in Argus</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">2</p><p style="font-size:28px;color:#101225">Create an SCT runner VM in the cloud</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">3</p><p style="font-size:28px;color:#101225">Run hydra there with the job’s settings plus yours</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">4</p><p style="font-size:28px;color:#101225">Collect logs, clean up resources</p></div>
+<div style="display:flex;gap:16px;align-items:center"><p style="font-size:26px;font-weight:700;color:#f5f9fd;background:#00a0d7;width:48px;height:48px;line-height:1.85;text-align:center;border-radius:50%">5</p><p style="font-size:28px;color:#101225">Report final status to Argus and by e-mail</p></div>
+</div>
+<p style="font-size:26px;color:#465271;line-height:1.4">Steps 4 and 5 run even when the test fails or is aborted.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Shared pipelines live in vars/ in the SCT repo. More in docs/sct-pipelines.md.</p>
+<aside>The one idea: a job is a few lines that bind a pipeline template to a test class and a YAML. Argus adds a page on top of it: it discovers jobs from Jenkins, and the folder definitions file next to the jenkinsfiles tells it which plugin and which Run wizard to use. Clone in Argus goes the other way: it creates a new Jenkins job from an existing one, and the page comes with it. The numbered list is what happens when you press Run, and the runner in step 2 is why a Jenkins run has no laptop involved. The jenkinsfile snippet is simplified; open the real file if someone asks.</aside>
+</section>
+
+<section id="what-is-sct" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">One SCT run, end to end</h2>
+</div>
+<div style="position:relative;width:1664px;height:420px">
+<div style="position:absolute;left:0;top:80px;width:300px;height:240px;background:#161a34;border:2px solid #f29300;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:32px;font-weight:700;color:#f29300">Runner</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Hydra container. Runs the test class, drives everything over SSH.</p>
+</div>
+<div style="position:absolute;left:420px;top:0px;width:360px;height:170px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">DB cluster</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">ScyllaDB nodes under test, plus any sidecar the test needs.</p>
+</div>
+<div style="position:absolute;left:420px;top:200px;width:360px;height:170px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">Loaders</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">cassandra-stress, latte, scylla-bench, ycsb.</p>
+</div>
+<div style="position:absolute;left:900px;top:110px;width:360px;height:180px;background:#161a34;border:2px solid #0079b3;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#41deff">Monitor</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Scylla Monitoring stack for the cluster and loaders.</p>
+</div>
+<div style="position:absolute;left:1380px;top:80px;width:284px;height:240px;background:#161a34;border:2px solid #687797;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;color:#d1dff3">Shared</h3>
+<p style="font-size:24px;color:#d1dff3;line-height:1.4">Argus, S3 for logs, Elasticsearch, cloud account.</p>
+</div>
+<x-connector x1="300" y1="160" x2="420" y2="85" head="end" style="color:#f29300;border-width:4px"></x-connector>
+<x-connector x1="300" y1="240" x2="420" y2="285" head="end" style="color:#f29300;border-width:4px"></x-connector>
+<x-connector x1="780" y1="85" x2="900" y2="200" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="780" y1="285" x2="900" y2="200" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="150" y1="320" x2="150" y2="400" head="none" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="150" y1="400" x2="1522" y2="400" head="none" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<x-connector x1="1522" y1="400" x2="1522" y2="320" head="end" style="color:#687797;border-width:3px;border-style:dashed"></x-connector>
+<p style="position:absolute;left:900px;top:330px;width:460px;font-size:22px;color:#687797;text-align:center">runner reports events, results and log archives</p>
+</div>
+<div style="display:flex;gap:16px;align-items:center">
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">provision</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">install + configure</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">run workload</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">inject faults</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">collect logs</p>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#687797"></x-shape>
+<p style="font-size:28px;color:#f5f9fd;background:#0079b3;padding:12px 24px;border-radius:999px">tear down</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">The SCT README has a generated system map per test type (docs/system-map) that shows exactly this for performance, longevity, upgrade and others.</p>
+<aside>Everything a run needs is created by the run and destroyed at the end. The runner is the only piece that runs SCT code; the rest are plain machines it drives over SSH, and the runner is also the one talking to Argus and S3. Faults are nemesis, used by longevity tests and usually skipped by performance tests. If time allows, open the interactive system map from the repo.</aside>
+</section>
+
+<section id="three-layers" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">A test is three files and a config stack</h2>
+</div>
+<div style="display:flex;gap:48px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Test class</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">longevity_test.py</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Python. Inherits the cluster tester, decides what to run and what to report.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Test-case YAML</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">test-cases/longevity/longevity-10gb-3h.yaml</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Node counts, sizing, stress command, duration, metadata. Most changes stop here.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#e6f0fb;padding:28px 32px;border-radius:12px;border-left:12px solid #00a0d7">
+<h3 style="font-size:32px;font-weight:700">Jenkins pipeline</h3>
+<p style="font-size:26px;font-family:'Roboto Mono', 'Courier New', monospace;color:#0079b3">jenkins-pipelines/oss/longevity/longevity-10gb-3h.jenkinsfile</p>
+<p style="font-size:26px;color:#465271;line-height:1.4">Binds the YAML to a backend, a region and a pipeline template.</p>
+</div>
+</div>
+<div style="width:640px;display:flex;flex-direction:column;gap:0">
+<p style="font-size:26px;color:#687797;font-weight:600;text-transform:uppercase;letter-spacing:2px;padding:0 0 16px">Config layers, top wins</p>
+<div style="background:#101225;color:#f5f9fd;padding:24px 32px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">SCT_* environment</p>
+<p style="font-size:24px;color:#41deff">Argus extra vars</p>
+</div>
+<div style="background:#005988;color:#f5f9fd;padding:24px 32px;border-top:none;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Extra --config files</p>
+<p style="font-size:24px;color:#d1dff3">from the jenkinsfile or your command line</p>
+</div>
+<div style="background:#0079b3;color:#f5f9fd;padding:24px 32px;border-top:none;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Test-case YAML</p>
+<p style="font-size:24px;color:#d1dff3">test-cases/…</p>
+</div>
+<div style="background:#00a0d7;color:#101225;padding:24px 32px;border-top:none;border-radius:0 0 12px 12px;display:flex;justify-content:space-between;align-items:center">
+<p style="font-size:30px;font-weight:700">Defaults</p>
+<p style="font-size:24px;color:#101225">defaults/ per backend</p>
+</div>
+<p style="font-size:24px;color:#465271;line-height:1.4;padding:20px 0 0">The extra variables typed into Argus in Part 1 sit on top of this stack. Every option is documented in docs/configuration_options.md.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Walkthrough for a new test: docs/writing-a-test.md.</p>
+<aside>Open the longevity YAML live and point at test_metadata, the stress command, node counts and the sizing block. Then show one option in the configuration reference. The message: if you only change a value, you touch the YAML or an env var, never Python.</aside>
+</section>
+
+<section id="ways-to-run" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Three ways to run a test</h2>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#101225;color:#f5f9fd;padding:40px;border-radius:16px">
+<p style="font-size:26px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">In the cloud</p>
+<h3 style="font-size:40px;font-weight:700">Argus or Jenkins</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">Run button in Argus, or Build with parameters in Jenkins. A runner VM is created next to the cluster. Results tracked in Argus.</p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">Where to look while it runs: the Jenkins console first, then the Argus run as events arrive.</p>
+<div style="flex:1"></div>
+<p style="font-size:24px;color:#41deff;font-weight:700">Needs</p>
+<ul style="font-size:24px;color:#d1dff3;line-height:1.5">
+<li>Argus and Jenkins accounts</li>
+<li>Nothing on your machine</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#e6f0fb;padding:40px;border-radius:16px">
+<p style="font-size:26px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">From your laptop, cloud backend</p>
+<h3 style="font-size:40px;font-weight:700">hydra run-test</h3>
+<p style="font-size:26px;color:#465271;line-height:1.4">Your checkout, your branch, real cloud machines. Hydra runs the test locally over public IPs, or on a runner you create in the cloud, which makes it the same as a Jenkins run.</p>
+<div style="flex:1"></div>
+<p style="font-size:24px;color:#0079b3;font-weight:700">Needs</p>
+<ul style="font-size:24px;color:#465271;line-height:1.5">
+<li>Docker or Podman, AWS access via Okta</li>
+<li>Cloud credentials for the backend</li>
+<li>Clean up when done, it costs money</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#e6f0fb;padding:40px;border-radius:16px">
+<p style="font-size:26px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Fully local</p>
+<h3 style="font-size:40px;font-weight:700">docker or minicloud</h3>
+<p style="font-size:26px;color:#465271;line-height:1.4">Docker backend: cluster as containers, fastest for test logic. Minicloud: emulates EC2 and GCE APIs with KVM guests, so the real aws and gce code paths run.</p>
+<div style="flex:1"></div>
+<p style="font-size:24px;color:#0079b3;font-weight:700">Needs</p>
+<ul style="font-size:24px;color:#465271;line-height:1.5">
+<li>Docker, passwordless sudo, AWS access for S3</li>
+<li>Minicloud: KVM, about 22 GiB RAM, 80 GiB disk</li>
+</ul>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Every way needs AWS access, even the local ones: SCT reads SSH keys and credentials from S3. Local results land in ~/sct-results/latest. Set SCT_ENABLE_ARGUS=false for local experiments.</p>
+<aside>Walk left to right. The middle column is the bridge: the same hydra command Jenkins runs, from your checkout. Without a runner, add the public-IP network config from the README table. With hydra create-runner-instance and execute-on-runner you get the Jenkins setup with your branch. Right column is where test logic gets debugged for free.</aside>
+</section>
+
+<section id="backends" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Backends: one command, one flag</h2>
+</div>
+<p style="font-size:30px;font-family:'Roboto Mono', 'Courier New', monospace;background:#101225;color:#f5f9fd;padding:24px 32px;border-radius:12px">hydra run-test &lt;module.Class.test&gt; --backend &lt;backend&gt; --config test-cases/&lt;case&gt;.yaml</p>
+<table style="font-size:26px;color:#101225;width:1664px">
+<tr style="background:#101225"><th style="width:22%;color:#f5f9fd;text-align:left;padding:14px 24px">Backend</th><th style="width:38%;color:#f5f9fd;text-align:left">What it is</th><th style="width:40%;color:#f5f9fd;text-align:left">Notes</th></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">aws · gce · azure · oci</td><td style="color:#465271">Public clouds, real VMs</td><td style="color:#465271">aws most used, gce for artifacts and upgrades. From a laptop add the public-IP network config.</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">xcloud</td><td style="color:#465271">ScyllaDB Cloud managed clusters</td><td style="color:#465271">Provider and environment set by env vars</td></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">k8s-eks · k8s-gke · k8s-local-kind</td><td style="color:#465271">Scylla Operator on Kubernetes</td><td style="color:#465271">Managed clusters, or kind locally or on one VM</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">baremetal</td><td style="color:#465271">Hosts that already exist, such as lab machines</td><td style="color:#465271">Inventory from a JSON file or the keystore</td></tr>
+<tr><td style="font-family:'Roboto Mono', 'Courier New', monospace">docker</td><td style="color:#465271">Containers on your machine</td><td style="color:#465271">Not every nemesis works, see docs</td></tr>
+<tr style="background:#e6f0fb"><td style="font-family:'Roboto Mono', 'Courier New', monospace">minicloud (aws or gce)</td><td style="color:#465271">Emulated cloud APIs, KVM guests</td><td style="color:#465271">Same backend code as the real cloud, no instance cost</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Per-backend settings and docs: README section 3 and docs/configuration_options.md.</p>
+<aside>Do not read the table aloud. Point at the command on top: the backend is a flag plus credentials, everything else in the test stays the same. Mention that minicloud is not a backend name but a way to run the aws or gce backend locally.</aside>
+</section>
+
+<section id="edit-or-write" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">What do I touch? Start at the top</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">Change a value, same test</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#00a0d7;align-self:center"></x-shape>
+<div style="flex:1;background:#e6f0fb;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#0079b3">Env var in Argus, or edit the YAML</p>
+<p style="font-size:26px;color:#465271">Duration, config path, versions, node counts. No code, no new job.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">New variant of an existing test</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#00a0d7;align-self:center"></x-shape>
+<div style="flex:1;background:#e6f0fb;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#0079b3">New test-case YAML</p>
+<p style="font-size:26px;color:#465271">A new YAML under test-cases and a jenkinsfile pointing at it. Or clone the job in Argus and override values.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">New behaviour or new result</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#f29300;align-self:center"></x-shape>
+<div style="flex:1;background:#fff4e5;padding:28px 32px;border-radius:12px;border:2px solid #f29300;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#dd7900">New or changed test class</p>
+<p style="font-size:26px;color:#465271">Python, unit tests, a jenkinsfile, an Argus page. Follow docs/writing-a-test.md.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Checklist for a new test: test class, YAML with test_metadata, jenkinsfile, Argus page, unit tests, docs.</p>
+<aside>Most requests from the team will be the first row. Make that explicit so people do not open the Python when they only need a value changed. The third row is the only one that needs a review from the SCT maintainers.</aside>
+</section>
+
+<section id="links" data-transition="fade" style="background:#101225;color:#f5f9fd;font-family:'Roboto Flex', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:72px">
+<x-shape kind="rect" style="position:absolute;left:0;top:0;width:24px;height:1080px;background:#00a0d7"></x-shape>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:28px;color:#41deff;font-weight:600;text-transform:uppercase;letter-spacing:2px">Wrap-up</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">Three links to keep</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#161a34;padding:40px;border-radius:16px;border-top:8px solid #00a0d7">
+<h3 style="font-size:36px;font-weight:700">Argus</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4"><a href="https://argus.scylladb.com">argus.scylladb.com</a></p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">Test pages, runs, results, Run button.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#161a34;padding:40px;border-radius:16px;border-top:8px solid #00a0d7">
+<h3 style="font-size:36px;font-weight:700">SCT README</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4"><a href="https://github.com/scylladb/scylla-cluster-tests">github.com/scylladb/scylla-cluster-tests</a></p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">Set up, first local run, everyday tasks, writing a test.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#161a34;padding:40px;border-radius:16px;border-top:8px solid #f29300">
+<h3 style="font-size:36px;font-weight:700">Getting started with SCT</h3>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4"><a href="https://scylladb.atlassian.net/wiki/spaces/RND/pages/81133746/Getting+started+with+SCT">Confluence · R&amp;D space · Getting started with SCT</a></p>
+<p style="font-size:26px;color:#d1dff3;line-height:1.4">Internal setup: AWS access via Okta, first run, where to ask.</p>
+</div>
+</div>
+<aside>Close with the one-line summary: Argus is where you look and press Run, Jenkins is what runs, SCT is what the run is.</aside>
+</section>
+
+</div>
+<div id="hud"></div>
+<div id="notes"></div>
+<script src="viewer/deck.js"></script>
+</body>
+</html>

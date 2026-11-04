@@ -1,0 +1,40 @@
+<section id="edit-or-write" data-transition="fade" style="background:#f5f9fd;color:#101225;font-family:'Roboto Flex', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:28px;color:#0079b3;font-weight:600;text-transform:uppercase;letter-spacing:2px">Part 3 · SCT</p>
+<h2 style="font-size:72px;font-weight:700;line-height:1.1">What do I touch? Start at the top</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">Change a value, same test</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#00a0d7;align-self:center"></x-shape>
+<div style="flex:1;background:#e6f0fb;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#0079b3">Env var in Argus, or edit the YAML</p>
+<p style="font-size:26px;color:#465271">Duration, config path, versions, node counts. No code, no new job.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">New variant of an existing test</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#00a0d7;align-self:center"></x-shape>
+<div style="flex:1;background:#e6f0fb;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#0079b3">New test-case YAML</p>
+<p style="font-size:26px;color:#465271">A new YAML under test-cases and a jenkinsfile pointing at it. Or clone the job in Argus and override values.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:stretch">
+<div style="width:520px;background:#101225;color:#f5f9fd;padding:28px 32px;border-radius:12px;display:flex;flex-direction:column;justify-content:center">
+<p style="font-size:30px;font-weight:700">New behaviour or new result</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:32px;background:#f29300;align-self:center"></x-shape>
+<div style="flex:1;background:#fff4e5;padding:28px 32px;border-radius:12px;border:2px solid #f29300;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<p style="font-size:30px;font-weight:700;color:#dd7900">New or changed test class</p>
+<p style="font-size:26px;color:#465271">Python, unit tests, a jenkinsfile, an Argus page. Follow docs/writing-a-test.md.</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;font-size:24px;color:#687797">Checklist for a new test: test class, YAML with test_metadata, jenkinsfile, Argus page, unit tests, docs.</p>
+<aside>Most requests from the team will be the first row. Make that explicit so people do not open the Python when they only need a value changed. The third row is the only one that needs a review from the SCT maintainers.</aside>
+</section>
