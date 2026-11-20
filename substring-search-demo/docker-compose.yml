@@ -28,7 +28,6 @@ services:
     environment:
       VECTOR_STORE_URI: "0.0.0.0:6080"
       VECTOR_STORE_SCYLLADB_URI: "scylla:9042"
-      VECTOR_STORE_PATTERN_INDEXES: "true"     # the default; here to show the switch exists
     ports:
       - "6080:6080"
     depends_on:
