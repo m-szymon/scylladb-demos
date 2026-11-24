@@ -438,9 +438,9 @@ SELECT nickname FROM search_demo.users
      ordered column register_time
 
 SELECT username FROM search_demo.users WHERE username LIKE '%ng%' ORDER BY register_time DESC LIMIT 20;
-  -> InvalidRequest: Pattern search queries on an index without order_by return rows in table
-     order, as a filtered LIKE does, and cannot be ordered: order by columns an index declares in
-     its 'order_by' option
+  -> InvalidRequest: Pattern search queries on an index without order_by return rows in the
+     index's own order and cannot be ordered: order by columns an index declares in its
+     'order_by' option
 
 SELECT nickname FROM search_demo.users
   WHERE account_type = 0 AND nickname LIKE '%将军%' LIMIT 20 ALLOW FILTERING;
@@ -451,9 +451,6 @@ SELECT nickname FROM search_demo.users
 Every `LIKE` on a column with a pattern index goes to the index, `ALLOW FILTERING` or not, and
 there is no fallback to a scan. The query is strict about its shape, so that what it promises, an
 index lookup, is what it does. Dropping the indexes restores filtered `LIKE`.
-
-One of these messages is out of date: an index without `order_by` no longer returns "table order,
-as a filtered LIKE does" by default. The same sentence is in the warning `CREATE INDEX` prints.
 
 ## Under the hood
 
