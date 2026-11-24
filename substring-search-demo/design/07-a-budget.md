@@ -60,8 +60,8 @@ and an unpaged query fails at the timeout.
 ## Limits
 
 - **The budget is one setting for the whole node** (`VECTOR_STORE_PATTERN_SEARCH_BUDGET`,
-  default `50ms`, `0s` for none), not per index and not per request. Changing it needs a
-  restart.
+  default `50ms`, `0s` for none), not per index and not per request. A change takes effect
+  on a configuration reload, without a restart.
 - **A large piece with no sorted runs is read whole before anything is sure**, so a request
   over one can run long past the budget. [Sorted commits](06-sorted-commits.md) removed almost
   all such pieces.
