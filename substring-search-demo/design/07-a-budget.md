@@ -65,13 +65,14 @@ and an unpaged query fails at the timeout.
 - **A large piece with no sorted runs is read whole before anything is sure**, so a request
   over one can run long past the budget. [Sorted commits](06-sorted-commits.md) removed almost
   all such pieces.
-- **A possible small cost on queries that match nothing** showed in one cluster run and has not
-  been examined.
+- **Queries that match nothing paid for the clock**, 15 to 30% of their time in the index, until
+  the budget was made to look at it only for a part of the index that has candidates
+  (vector-store `a1199ca`).
 
 ## Code
 
 | What | Where |
 |---|---|
-| The budget and the cut | `SearchBudget`, `Spending` in [tantivy.rs](../../vector-store/crates/vector-store/src/pattern_index/tantivy.rs); vector-store `3b2a6d8` |
-| The setting | vector-store `7b57c53` |
+| The budget and the cut | `SearchBudget`, `Spending` in [tantivy.rs](../../vector-store/crates/vector-store/src/pattern_index/tantivy.rs); vector-store `a1199ca` |
+| The setting | vector-store `e5af26e` |
 | Topping up a short page | [ordered_pattern_select_statement.cc](../../scylladb/cql3/statements/external_search/ordered_pattern_select_statement.cc); scylladb `0c9559b487` |

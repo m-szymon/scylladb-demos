@@ -53,6 +53,10 @@ clean-up starts, and the library waits for that lock by sleeping 100 ms. One thr
 asleep most of the time. The reload now checks the lock itself every 0.1 ms and goes on as soon
 as it is free.
 
+This is not special to the pattern index. A full-text index of 1 million documents built on
+upstream's code slept this way after one commit in four, a thread asleep for a quarter of the
+build.
+
 ## The evidence
 
 A settled index of 1 million rows searched by 8 clients with 5 ms between their queries, and a
@@ -83,7 +87,7 @@ benchmark on a laptop, not a cluster run.
 | What | Where |
 |---|---|
 | Live writes ahead of searches, with a floor for searches | [worker.rs](../../vector-store/crates/vector-store/src/worker.rs); vector-store `3341221` |
-| The class for build rows, and its cap | vector-store `abf95c5` |
-| Settings that follow a configuration reload | vector-store `d976401` |
-| The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `5b37281` |
-| The benchmark | vector-store `a7a0bb7` |
+| The class for build rows, and its cap | vector-store `9b6c750` |
+| Settings that follow a configuration reload | vector-store `3ded4a9` |
+| The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `20ab577` |
+| The benchmark | vector-store `aab8a14` |

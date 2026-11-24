@@ -52,8 +52,6 @@ red frame is where a page of the newest rows looks.
   wrong.** They work together, but they are hard to reason about.
 - **A row that arrives out of order is indexed twice**: once when it arrives, once when it is
   repaired.
-- **Our frequent merges have a side effect** on reloading the index (see
-  [Three classes of work](09-three-classes.md)).
 - **The write path under it will change** when rows are sent in batches (VECTOR-1186).
 
 ## Code
