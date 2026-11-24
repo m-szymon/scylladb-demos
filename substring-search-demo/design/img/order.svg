@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 312" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="A page read from an index in the query's order, against one in no order">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
+<rect width="800" height="312" rx="10" fill="#f8f9fb"/>
+<text x="400" y="32" font-size="15" fill="#1f2933" text-anchor="middle">The first 3 matches, newest first. A green cell is a row that matches.</text>
+<text x="76" y="70" font-size="14" fill="#1f2933" font-weight="600">Index kept in the query&#39;s order</text>
+<rect x="76" y="82" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="103" y="82" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="130" y="82" width="24" height="30" rx="4" fill="#2a9d6f" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="157" y="82" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="184" y="82" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="211" y="82" width="24" height="30" rx="4" fill="#2a9d6f" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="238" y="82" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="265" y="82" width="24" height="30" rx="4" fill="#2a9d6f" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="292" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="319" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="346" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="373" y="82" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="400" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="427" y="82" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="454" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="481" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="508" y="82" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="535" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="562" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="589" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="616" y="82" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="643" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="670" y="82" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="697" y="82" width="24" height="30" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<text x="76" y="132" font-size="12" fill="#52606d">newest</text>
+<text x="721" y="132" font-size="12" fill="#52606d" text-anchor="end">oldest</text>
+<line x1="290" y1="76" x2="290" y2="118" stroke="#c0392b" stroke-width="2"/>
+<text x="298" y="132" font-size="13" fill="#c0392b">stop: the page is full after 8 rows</text>
+<text x="76" y="186" font-size="14" fill="#1f2933" font-weight="600">Index in no order</text>
+<rect x="76" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="103" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="130" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="157" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="184" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="211" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="238" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="265" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="292" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="319" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="346" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="373" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="400" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="427" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="454" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="481" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="508" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="535" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="562" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="589" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<rect x="616" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="643" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="670" y="198" width="24" height="30" rx="4" fill="#eceff3" stroke="#9aa5b1" stroke-width="1.2"/>
+<rect x="697" y="198" width="24" height="30" rx="4" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.2"/>
+<text x="76" y="250" font-size="13" fill="#c0392b">every row has to be looked at: 8 matches found, sorted, 3 kept</text>
+<text x="400" y="292" font-size="13" fill="#52606d" text-anchor="middle">With ten million rows the first costs the same 8 rows. The second costs ten million.</text>
+</svg>

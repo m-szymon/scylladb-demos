@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="A pattern answered from the pieces of the values, then checked">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
+<rect width="800" height="350" rx="10" fill="#f8f9fb"/>
+<text x="400" y="32" font-size="15" fill="#1f2933" text-anchor="middle">LIKE &#39;%alin%&#39; on six names, with pieces of three characters</text>
+<text x="40" y="70" font-size="14" fill="#1f2933" font-weight="600">The values</text>
+<text x="40" y="96" font-size="13" fill="#52606d">1</text>
+<text x="62" y="96" font-size="14" fill="#1f2933">malina</text>
+<text x="40" y="122" font-size="13" fill="#52606d">2</text>
+<text x="62" y="122" font-size="14" fill="#1f2933">alina</text>
+<text x="40" y="148" font-size="13" fill="#52606d">3</text>
+<text x="62" y="148" font-size="14" fill="#1f2933">linali</text>
+<text x="40" y="174" font-size="13" fill="#52606d">4</text>
+<text x="62" y="174" font-size="14" fill="#1f2933">natalia</text>
+<text x="40" y="200" font-size="13" fill="#52606d">5</text>
+<text x="62" y="200" font-size="14" fill="#1f2933">kalina</text>
+<text x="40" y="226" font-size="13" fill="#52606d">6</text>
+<text x="62" y="226" font-size="14" fill="#1f2933">olaf</text>
+<text x="210" y="70" font-size="14" fill="#1f2933" font-weight="600">The index: piece &#8594; rows that hold it</text>
+<rect x="210" y="84" width="58" height="28" rx="5" fill="#dbe7fb" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="239" y="103" font-size="14" fill="#1f2933" font-weight="600" text-anchor="middle">ali</text>
+<circle cx="298" cy="98" r="11" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="298" y="103" font-size="13" fill="#1f2933" text-anchor="middle">1</text>
+<circle cx="328" cy="98" r="11" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="328" y="103" font-size="13" fill="#1f2933" text-anchor="middle">2</text>
+<circle cx="358" cy="98" r="11" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="358" y="103" font-size="13" fill="#1f2933" text-anchor="middle">3</text>
+<circle cx="388" cy="98" r="11" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="388" y="103" font-size="13" fill="#1f2933" text-anchor="middle">4</text>
+<circle cx="418" cy="98" r="11" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/>
+<text x="418" y="103" font-size="13" fill="#1f2933" text-anchor="middle">5</text>
+<rect x="210" y="124" width="58" height="28" rx="5" fill="#fbe6d0" stroke="#e07a1f" stroke-width="1.5"/>
+<text x="239" y="143" font-size="14" fill="#1f2933" font-weight="600" text-anchor="middle">lin</text>
+<circle cx="298" cy="138" r="11" fill="#ffffff" stroke="#e07a1f" stroke-width="1.5"/>
+<text x="298" y="143" font-size="13" fill="#1f2933" text-anchor="middle">1</text>
+<circle cx="328" cy="138" r="11" fill="#ffffff" stroke="#e07a1f" stroke-width="1.5"/>
+<text x="328" y="143" font-size="13" fill="#1f2933" text-anchor="middle">2</text>
+<circle cx="358" cy="138" r="11" fill="#ffffff" stroke="#e07a1f" stroke-width="1.5"/>
+<text x="358" y="143" font-size="13" fill="#1f2933" text-anchor="middle">3</text>
+<circle cx="388" cy="138" r="11" fill="#ffffff" stroke="#e07a1f" stroke-width="1.5"/>
+<text x="388" y="143" font-size="13" fill="#1f2933" text-anchor="middle">5</text>
+<rect x="210" y="164" width="58" height="28" rx="5" fill="#eceff3" stroke="#d5dae0" stroke-width="1.5"/>
+<text x="239" y="183" font-size="14" fill="#1f2933" font-weight="600" text-anchor="middle">ola</text>
+<circle cx="298" cy="178" r="11" fill="#ffffff" stroke="#d5dae0" stroke-width="1.5"/>
+<text x="298" y="183" font-size="13" fill="#1f2933" text-anchor="middle">6</text>
+<rect x="210" y="204" width="58" height="28" rx="5" fill="#eceff3" stroke="#d5dae0" stroke-width="1.5"/>
+<text x="239" y="223" font-size="14" fill="#1f2933" font-weight="600" text-anchor="middle">...</text>
+<text x="500" y="70" font-size="14" fill="#1f2933" font-weight="600">The query</text>
+<text x="500" y="96" font-size="13" fill="#52606d">1  &#39;alin&#39; is longer than a piece, so it is cut:</text>
+<text x="518" y="116" font-size="13" fill="#52606d">every match must hold &#39;ali&#39; and &#39;lin&#39;</text>
+<text x="500" y="146" font-size="13" fill="#52606d">2  rows in both lists: the candidates</text>
+<circle cx="530" cy="170" r="12" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.5"/>
+<text x="530" y="175" font-size="13" fill="#1f2933" text-anchor="middle">1</text>
+<circle cx="564" cy="170" r="12" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.5"/>
+<text x="564" y="175" font-size="13" fill="#1f2933" text-anchor="middle">2</text>
+<circle cx="598" cy="170" r="12" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.5"/>
+<text x="598" y="175" font-size="13" fill="#1f2933" text-anchor="middle">3</text>
+<circle cx="632" cy="170" r="12" fill="#d8f0e5" stroke="#2a9d6f" stroke-width="1.5"/>
+<text x="632" y="175" font-size="13" fill="#1f2933" text-anchor="middle">5</text>
+<text x="500" y="210" font-size="13" fill="#52606d">3  check each stored value</text>
+<text x="518" y="236" font-size="14" fill="#1f2933">malina</text>
+<text x="600" y="236" font-size="13" fill="#2a9d6f">holds &#39;alin&#39;</text>
+<text x="768" y="236" font-size="15" fill="#2a9d6f" font-weight="700">&#10003;</text>
+<text x="518" y="260" font-size="14" fill="#1f2933">alina</text>
+<text x="600" y="260" font-size="13" fill="#2a9d6f">holds &#39;alin&#39;</text>
+<text x="768" y="260" font-size="15" fill="#2a9d6f" font-weight="700">&#10003;</text>
+<text x="518" y="284" font-size="14" fill="#1f2933">linali</text>
+<text x="600" y="284" font-size="13" fill="#c0392b">holds both pieces, apart</text>
+<text x="768" y="284" font-size="15" fill="#c0392b" font-weight="700">&#10007;</text>
+<text x="518" y="308" font-size="14" fill="#1f2933">kalina</text>
+<text x="600" y="308" font-size="13" fill="#2a9d6f">holds &#39;alin&#39;</text>
+<text x="768" y="308" font-size="15" fill="#2a9d6f" font-weight="700">&#10003;</text>
+<text x="40" y="290" font-size="13" fill="#52606d">Row 6 is never looked at.</text>
+<text x="40" y="312" font-size="13" fill="#52606d">Row 3 is looked at and dropped:</text>
+<text x="40" y="332" font-size="13" fill="#52606d">the price of pieces shorter than the keyword.</text>
+</svg>

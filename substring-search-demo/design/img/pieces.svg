@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 322" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Pieces of the index overlapping, and side by side after a repair">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
+<rect width="800" height="322" rx="10" fill="#f8f9fb"/>
+<text x="400" y="32" font-size="14" fill="#1f2933" text-anchor="middle">The index is a set of pieces (segments). Each bar is one, drawn over the part of the order it holds.</text>
+<text x="40" y="66" font-size="14" fill="#1f2933" font-weight="600">As rows arrive: every piece spans everything</text>
+<rect x="40" y="80" width="330" height="15" rx="4" fill="#fbe6d0" stroke="none" stroke-width="0"/>
+<rect x="44" y="102" width="322" height="15" rx="4" fill="#fbe6d0" stroke="none" stroke-width="0"/>
+<rect x="40" y="124" width="326" height="15" rx="4" fill="#fbe6d0" stroke="none" stroke-width="0"/>
+<rect x="48" y="146" width="320" height="15" rx="4" fill="#fbe6d0" stroke="none" stroke-width="0"/>
+<rect x="42" y="168" width="328" height="15" rx="4" fill="#fbe6d0" stroke="none" stroke-width="0"/>
+<line x1="40" y1="200" x2="370" y2="200" stroke="#52606d" stroke-width="1.2" marker-end="url(#a)"/>
+<text x="40" y="218" font-size="12" fill="#52606d">newest</text>
+<text x="370" y="218" font-size="12" fill="#52606d" text-anchor="end">oldest</text>
+<rect x="40" y="74" width="26" height="122" rx="4" fill="none" stroke="#c0392b" stroke-width="2"/>
+<text x="74" y="240" font-size="13" fill="#c0392b">the page (red) crosses all 5 pieces</text>
+<text x="430" y="66" font-size="14" fill="#1f2933" font-weight="600">Tidied: pieces side by side</text>
+<rect x="430" y="80" width="64" height="15" rx="4" fill="#d8f0e5" stroke="none" stroke-width="0"/>
+<rect x="496" y="102" width="64" height="15" rx="4" fill="#d8f0e5" stroke="none" stroke-width="0"/>
+<rect x="562" y="124" width="64" height="15" rx="4" fill="#d8f0e5" stroke="none" stroke-width="0"/>
+<rect x="628" y="146" width="64" height="15" rx="4" fill="#d8f0e5" stroke="none" stroke-width="0"/>
+<rect x="694" y="168" width="66" height="15" rx="4" fill="#d8f0e5" stroke="none" stroke-width="0"/>
+<line x1="430" y1="200" x2="760" y2="200" stroke="#52606d" stroke-width="1.2" marker-end="url(#a)"/>
+<text x="430" y="218" font-size="12" fill="#52606d">newest</text>
+<text x="760" y="218" font-size="12" fill="#52606d" text-anchor="end">oldest</text>
+<rect x="430" y="74" width="26" height="122" rx="4" fill="none" stroke="#c0392b" stroke-width="2"/>
+<text x="464" y="240" font-size="13" fill="#c0392b">the page crosses 1 piece</text>
+<line x1="378" y1="130" x2="422" y2="130" stroke="#1f2933" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="400" y="120" font-size="12" fill="#52606d" text-anchor="middle">repair</text>
+<text x="400" y="282" font-size="13" fill="#52606d" text-anchor="middle">Two kinds of pieces are kept apart: fresh ones, as commits leave them, and ordered ones, which never overlap.</text>
+<text x="400" y="302" font-size="13" fill="#52606d" text-anchor="middle">A repair step moves fresh rows into the ordered kind, the worst stretch first, when the node has time.</text>
+</svg>

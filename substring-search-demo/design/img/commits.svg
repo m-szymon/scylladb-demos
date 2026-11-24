@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 312" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="A commit written as it came, and written in key order">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
+<rect width="800" height="312" rx="10" fill="#f8f9fb"/>
+<text x="400" y="32" font-size="15" fill="#1f2933" text-anchor="middle">The same commit of rows, written two ways. Green is what a page has to read.</text>
+<text x="60" y="66" font-size="14" fill="#1f2933" font-weight="600">In the order they arrived</text>
+<rect x="60" y="78" width="320" height="170" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<circle cx="257" cy="200" r="2.6" fill="#2a9d6f"/>
+<circle cx="310" cy="231" r="2.6" fill="#2a9d6f"/>
+<circle cx="293" cy="228" r="2.6" fill="#2a9d6f"/>
+<circle cx="77" cy="158" r="2.6" fill="#2a9d6f"/>
+<circle cx="355" cy="186" r="2.6" fill="#2a9d6f"/>
+<circle cx="342" cy="103" r="2.6" fill="#2a9d6f"/>
+<circle cx="211" cy="124" r="2.6" fill="#2a9d6f"/>
+<circle cx="233" cy="174" r="2.6" fill="#2a9d6f"/>
+<circle cx="72" cy="119" r="2.6" fill="#2a9d6f"/>
+<circle cx="153" cy="227" r="2.6" fill="#2a9d6f"/>
+<circle cx="301" cy="111" r="2.6" fill="#2a9d6f"/>
+<circle cx="310" cy="107" r="2.6" fill="#2a9d6f"/>
+<circle cx="256" cy="106" r="2.6" fill="#2a9d6f"/>
+<circle cx="69" cy="220" r="2.6" fill="#2a9d6f"/>
+<circle cx="132" cy="119" r="2.6" fill="#2a9d6f"/>
+<circle cx="367" cy="220" r="2.6" fill="#2a9d6f"/>
+<circle cx="156" cy="234" r="2.6" fill="#2a9d6f"/>
+<circle cx="232" cy="190" r="2.6" fill="#2a9d6f"/>
+<circle cx="130" cy="231" r="2.6" fill="#2a9d6f"/>
+<circle cx="278" cy="235" r="2.6" fill="#2a9d6f"/>
+<circle cx="340" cy="132" r="2.6" fill="#2a9d6f"/>
+<circle cx="178" cy="112" r="2.6" fill="#2a9d6f"/>
+<circle cx="112" cy="96" r="2.6" fill="#2a9d6f"/>
+<circle cx="160" cy="179" r="2.6" fill="#2a9d6f"/>
+<circle cx="69" cy="190" r="2.6" fill="#2a9d6f"/>
+<circle cx="171" cy="134" r="2.6" fill="#2a9d6f"/>
+<circle cx="317" cy="160" r="2.6" fill="#2a9d6f"/>
+<circle cx="164" cy="160" r="2.6" fill="#2a9d6f"/>
+<circle cx="282" cy="95" r="2.6" fill="#2a9d6f"/>
+<circle cx="364" cy="90" r="2.6" fill="#2a9d6f"/>
+<circle cx="296" cy="216" r="2.6" fill="#2a9d6f"/>
+<circle cx="73" cy="207" r="2.6" fill="#2a9d6f"/>
+<circle cx="179" cy="175" r="2.6" fill="#2a9d6f"/>
+<circle cx="71" cy="93" r="2.6" fill="#2a9d6f"/>
+<circle cx="123" cy="233" r="2.6" fill="#2a9d6f"/>
+<circle cx="128" cy="202" r="2.6" fill="#2a9d6f"/>
+<circle cx="351" cy="231" r="2.6" fill="#2a9d6f"/>
+<circle cx="173" cy="141" r="2.6" fill="#2a9d6f"/>
+<circle cx="228" cy="205" r="2.6" fill="#2a9d6f"/>
+<circle cx="101" cy="201" r="2.6" fill="#2a9d6f"/>
+<circle cx="310" cy="218" r="2.6" fill="#2a9d6f"/>
+<circle cx="79" cy="232" r="2.6" fill="#2a9d6f"/>
+<circle cx="96" cy="138" r="2.6" fill="#2a9d6f"/>
+<circle cx="254" cy="227" r="2.6" fill="#2a9d6f"/>
+<circle cx="171" cy="228" r="2.6" fill="#2a9d6f"/>
+<circle cx="234" cy="134" r="2.6" fill="#2a9d6f"/>
+<circle cx="164" cy="113" r="2.6" fill="#2a9d6f"/>
+<circle cx="92" cy="109" r="2.6" fill="#2a9d6f"/>
+<circle cx="278" cy="239" r="2.6" fill="#2a9d6f"/>
+<circle cx="117" cy="93" r="2.6" fill="#2a9d6f"/>
+<circle cx="368" cy="168" r="2.6" fill="#2a9d6f"/>
+<circle cx="191" cy="123" r="2.6" fill="#2a9d6f"/>
+<circle cx="249" cy="213" r="2.6" fill="#2a9d6f"/>
+<circle cx="207" cy="151" r="2.6" fill="#2a9d6f"/>
+<circle cx="85" cy="227" r="2.6" fill="#2a9d6f"/>
+<circle cx="78" cy="162" r="2.6" fill="#2a9d6f"/>
+<circle cx="323" cy="106" r="2.6" fill="#2a9d6f"/>
+<circle cx="290" cy="232" r="2.6" fill="#2a9d6f"/>
+<circle cx="260" cy="207" r="2.6" fill="#2a9d6f"/>
+<circle cx="100" cy="153" r="2.6" fill="#2a9d6f"/>
+<circle cx="113" cy="216" r="2.6" fill="#2a9d6f"/>
+<circle cx="158" cy="156" r="2.6" fill="#2a9d6f"/>
+<circle cx="372" cy="217" r="2.6" fill="#2a9d6f"/>
+<circle cx="365" cy="156" r="2.6" fill="#2a9d6f"/>
+<circle cx="216" cy="198" r="2.6" fill="#2a9d6f"/>
+<circle cx="214" cy="131" r="2.6" fill="#2a9d6f"/>
+<circle cx="191" cy="109" r="2.6" fill="#2a9d6f"/>
+<circle cx="183" cy="238" r="2.6" fill="#2a9d6f"/>
+<circle cx="360" cy="183" r="2.6" fill="#2a9d6f"/>
+<circle cx="220" cy="138" r="2.6" fill="#2a9d6f"/>
+<circle cx="95" cy="128" r="2.6" fill="#2a9d6f"/>
+<circle cx="306" cy="220" r="2.6" fill="#2a9d6f"/>
+<circle cx="178" cy="207" r="2.6" fill="#2a9d6f"/>
+<circle cx="304" cy="193" r="2.6" fill="#2a9d6f"/>
+<circle cx="270" cy="203" r="2.6" fill="#2a9d6f"/>
+<circle cx="178" cy="194" r="2.6" fill="#2a9d6f"/>
+<circle cx="153" cy="161" r="2.6" fill="#2a9d6f"/>
+<circle cx="302" cy="192" r="2.6" fill="#2a9d6f"/>
+<circle cx="157" cy="232" r="2.6" fill="#2a9d6f"/>
+<circle cx="266" cy="175" r="2.6" fill="#2a9d6f"/>
+<circle cx="72" cy="170" r="2.6" fill="#2a9d6f"/>
+<circle cx="144" cy="189" r="2.6" fill="#2a9d6f"/>
+<circle cx="209" cy="212" r="2.6" fill="#2a9d6f"/>
+<circle cx="265" cy="209" r="2.6" fill="#2a9d6f"/>
+<circle cx="174" cy="185" r="2.6" fill="#2a9d6f"/>
+<circle cx="292" cy="214" r="2.6" fill="#2a9d6f"/>
+<circle cx="174" cy="216" r="2.6" fill="#2a9d6f"/>
+<circle cx="332" cy="192" r="2.6" fill="#2a9d6f"/>
+<circle cx="365" cy="233" r="2.6" fill="#2a9d6f"/>
+<circle cx="226" cy="168" r="2.6" fill="#2a9d6f"/>
+<circle cx="119" cy="215" r="2.6" fill="#2a9d6f"/>
+<circle cx="353" cy="159" r="2.6" fill="#2a9d6f"/>
+<circle cx="278" cy="197" r="2.6" fill="#2a9d6f"/>
+<circle cx="290" cy="112" r="2.6" fill="#2a9d6f"/>
+<circle cx="305" cy="175" r="2.6" fill="#2a9d6f"/>
+<circle cx="270" cy="151" r="2.6" fill="#2a9d6f"/>
+<circle cx="258" cy="205" r="2.6" fill="#2a9d6f"/>
+<circle cx="262" cy="197" r="2.6" fill="#2a9d6f"/>
+<circle cx="76" cy="111" r="2.6" fill="#2a9d6f"/>
+<circle cx="202" cy="186" r="2.6" fill="#2a9d6f"/>
+<circle cx="135" cy="192" r="2.6" fill="#2a9d6f"/>
+<circle cx="260" cy="92" r="2.6" fill="#2a9d6f"/>
+<circle cx="211" cy="121" r="2.6" fill="#2a9d6f"/>
+<circle cx="84" cy="107" r="2.6" fill="#2a9d6f"/>
+<circle cx="164" cy="114" r="2.6" fill="#2a9d6f"/>
+<circle cx="127" cy="91" r="2.6" fill="#2a9d6f"/>
+<circle cx="209" cy="145" r="2.6" fill="#2a9d6f"/>
+<circle cx="254" cy="177" r="2.6" fill="#2a9d6f"/>
+<circle cx="140" cy="225" r="2.6" fill="#2a9d6f"/>
+<circle cx="68" cy="148" r="2.6" fill="#2a9d6f"/>
+<circle cx="153" cy="149" r="2.6" fill="#2a9d6f"/>
+<circle cx="103" cy="214" r="2.6" fill="#2a9d6f"/>
+<circle cx="182" cy="92" r="2.6" fill="#2a9d6f"/>
+<circle cx="255" cy="101" r="2.6" fill="#2a9d6f"/>
+<circle cx="234" cy="138" r="2.6" fill="#2a9d6f"/>
+<circle cx="245" cy="234" r="2.6" fill="#2a9d6f"/>
+<circle cx="317" cy="151" r="2.6" fill="#2a9d6f"/>
+<circle cx="315" cy="185" r="2.6" fill="#2a9d6f"/>
+<circle cx="180" cy="108" r="2.6" fill="#2a9d6f"/>
+<circle cx="249" cy="173" r="2.6" fill="#2a9d6f"/>
+<line x1="60" y1="118" x2="380" y2="118" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="420" y="66" font-size="14" fill="#1f2933" font-weight="600">Sorted by key, in four groups</text>
+<rect x="420" y="78" width="320" height="170" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<line x1="426.0" y1="240" x2="479.87012987012986" y2="118" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="479.87012987012986" y1="118" x2="494.0" y2="86" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="506.0" y1="240" x2="559.8701298701299" y2="118" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="559.8701298701299" y1="118" x2="574.0" y2="86" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="586.0" y1="240" x2="639.8701298701299" y2="118" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="639.8701298701299" y1="118" x2="654.0" y2="86" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="666.0" y1="240" x2="719.8701298701299" y2="118" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="719.8701298701299" y1="118" x2="734.0" y2="86" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="420" y1="118" x2="740" y2="118" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="220" y="270" font-size="13" fill="#52606d" text-anchor="middle">nothing tells where the high rows are:</text>
+<text x="220" y="290" font-size="13" fill="#c0392b" text-anchor="middle">the whole piece is read</text>
+<text x="580" y="270" font-size="13" fill="#52606d" text-anchor="middle">the high rows are at the end of each run:</text>
+<text x="580" y="290" font-size="13" fill="#2a9d6f" text-anchor="middle">only those are read</text>
+</svg>

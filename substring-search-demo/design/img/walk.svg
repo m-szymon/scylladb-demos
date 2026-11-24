@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 352" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="One piece of four sorted runs. Green is what a page reads.">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
+<rect width="800" height="352" rx="10" fill="#f8f9fb"/>
+<text x="400" y="32" font-size="15" fill="#1f2933" text-anchor="middle">One piece of four sorted runs. Green is what a page reads.</text>
+<rect x="80" y="60" width="640" height="200" rx="4" fill="#ffffff" stroke="#9aa5b1" stroke-width="1.2"/>
+<text x="70" y="72" font-size="12" fill="#52606d" text-anchor="end">high</text>
+<text x="70" y="260" font-size="12" fill="#52606d" text-anchor="end">low</text>
+<text x="36" y="160.0" font-size="12" fill="#52606d" text-anchor="middle" transform="rotate(-90 36 160.0)">place in the order</text>
+<text x="400.0" y="282" font-size="12" fill="#52606d" text-anchor="middle">position inside the piece, as the rows were written</text>
+<line x1="88.0" y1="252" x2="203.82608695652175" y2="104" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="203.82608695652175" y1="104" x2="232.0" y2="68" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="248.0" y1="252" x2="363.82608695652175" y2="104" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="363.82608695652175" y1="104" x2="392.0" y2="68" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="408.0" y1="252" x2="523.8260869565217" y2="104" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="523.8260869565217" y1="104" x2="552.0" y2="68" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="568.0" y1="252" x2="683.8260869565217" y2="104" stroke="#9aa5b1" stroke-width="2"/>
+<line x1="683.8260869565217" y1="104" x2="712.0" y2="68" stroke="#2a9d6f" stroke-width="5"/>
+<line x1="80" y1="104" x2="720" y2="104" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="728" y="108" font-size="12" fill="#c0392b">the page</text>
+<text x="728" y="124" font-size="12" fill="#c0392b">ends here</text>
+<text x="400" y="312" font-size="13" fill="#52606d" text-anchor="middle">Each run is read from its high end down to the line where the page is full.</text>
+<text x="400" y="332" font-size="13" fill="#52606d" text-anchor="middle">Everything under the line is never read, however large the piece is.</text>
+</svg>
