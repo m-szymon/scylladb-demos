@@ -15,19 +15,27 @@ CREATE TABLE IF NOT EXISTS search_demo.users (
   username      text         -- login name, Latin letters and digits
 );
 
--- Substring indexes. The Vector Store indexes every substring of min_gram..max_gram characters of
--- the column (defaults 1..3); a LIKE '%keyword%' on the column is then answered from the index.
--- CQL LIKE is case-sensitive; case_sensitive = 'false' makes both the index and the keyword
+-- Pattern indexes. The Vector Store indexes every substring of min_gram..max_gram characters of
+-- the column (defaults 1..3); a LIKE on the column is then answered from the index.
+-- CQL LIKE is case-sensitive; case_sensitive = 'false' makes both the index and the pattern
 -- lowercase, which is what a search box wants for Latin names.
 --
--- order_by names a column the index keeps its matches sorted by, newest first. Only an index
--- created with it can answer ORDER BY, be restricted by a range on that column, or be paged: the
--- index walks its matches in that order, so it has a position to resume a later page from. The
--- column must be an integer or a time type. The username index below is created without it, so
--- that the difference is visible.
+-- An index answers in one order, fixed when it is created, and a query is served by the index
+-- whose order fits it. The nickname column has two:
+--
+-- - users_nickname_sub, with no order_by, serves a LIKE with no ORDER BY;
+-- - users_nickname_newest, ordered by register_time newest first, serves the same LIKE with
+--   ORDER BY register_time (either way) and a range on register_time: the search box that shows
+--   the newest matches first, with a date filter.
+--
+-- Both are paged. The username column has one index, with no order_by.
 CREATE CUSTOM INDEX IF NOT EXISTS users_nickname_sub ON search_demo.users (nickname)
   USING 'pattern_index'
-  WITH OPTIONS = {'case_sensitive': 'false', 'order_by': 'register_time'};
+  WITH OPTIONS = {'case_sensitive': 'false'};
+
+CREATE CUSTOM INDEX IF NOT EXISTS users_nickname_newest ON search_demo.users (nickname)
+  USING 'pattern_index'
+  WITH OPTIONS = {'case_sensitive': 'false', 'order_by': 'register_time DESC'};
 
 CREATE CUSTOM INDEX IF NOT EXISTS users_username_sub ON search_demo.users (username)
   USING 'pattern_index'

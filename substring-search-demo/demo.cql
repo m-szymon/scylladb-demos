@@ -1,24 +1,24 @@
--- Substring search demo. Run after schema.cql and data.cql, once ./wait-for-indexes.sh reports both
--- indexes SERVING. Paste the queries one at a time into cqlsh, or run the whole file with
+-- Substring search demo. Run after schema.cql and data.cql, once ./wait-for-indexes.sh reports the
+-- three indexes SERVING. Paste the queries one at a time into cqlsh, or run the whole file with
 --   podman-compose exec scylla cqlsh -f /demo/demo.cql
 --
 -- The one thing to know: a column with a pattern_index answers
---   WHERE column LIKE '%keyword%' LIMIT n
--- from the index, without ALLOW FILTERING and without a scan. Only that shape of pattern is served:
--- a literal keyword between two %, no other wildcard. Everything else LIKE can do still works the
--- way it always did, with ALLOW FILTERING.
+--   WHERE column LIKE '%keyword%'
+-- from the index, without ALLOW FILTERING and without a scan, a page at a time.
 --
--- The nickname index is created with order_by = 'register_time', so it can also answer
---   WHERE nickname LIKE '%keyword%' AND register_time < t ORDER BY register_time DESC LIMIT n
--- a page at a time -- a search box with a date filter. Sections 6a to 6c are that. The username
--- index is created without order_by, and shows what an index without it will not do.
+-- An index answers in one order, and a query goes to the index whose order fits it. The nickname
+-- column has two indexes: one with no order_by, which serves a LIKE with no ORDER BY, and one
+-- ordered by register_time, which serves
+--   WHERE nickname LIKE '%keyword%' AND register_time < t ORDER BY register_time DESC
+-- -- a search box that shows the newest matches first, with a date filter. Sections 6a to 6c
+-- are that.
 
 -- ---------------------------------------------------------------------------------------------
--- 0. The data: seventeen accounts, and the two indexes.
+-- 0. The data: seventeen accounts, and one of the three indexes.
 -- ---------------------------------------------------------------------------------------------
 SELECT nickname, username, register_time, status FROM search_demo.users;
 
-DESCRIBE INDEX search_demo.users_nickname_sub;
+DESCRIBE INDEX search_demo.users_nickname_newest;
 
 -- ---------------------------------------------------------------------------------------------
 -- 1. Containment. Five nicknames contain 将军, at the start, in the middle and at the end.
@@ -68,19 +68,20 @@ SELECT nickname, username FROM search_demo.users WHERE nickname LIKE '%将军来
 
 -- ---------------------------------------------------------------------------------------------
 -- 6. LIMIT is what the search box asks for: the index stops after that many matches.
---    With order_by set, the two it stops at are the two newest: 被禁将军 and 王将军.
+--    Without ORDER BY they are the first two in the index's own order, which is fixed but means
+--    nothing: a query that cares which two it gets says ORDER BY (6a).
 -- ---------------------------------------------------------------------------------------------
 SELECT nickname, register_time FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 2;
 
 -- ---------------------------------------------------------------------------------------------
--- 6a. ORDER BY. The index walks its matches newest first, so the order is the index's, not the
---     base table's -- and it is global, not a re-sort of one page.
+-- 6a. ORDER BY. This query goes to the other nickname index, the one ordered by register_time.
+--     It walks its matches newest first, so the order is global, not a re-sort of one page.
 -- ---------------------------------------------------------------------------------------------
 SELECT nickname, register_time FROM search_demo.users
   WHERE nickname LIKE '%将军%' ORDER BY register_time DESC LIMIT 20;
 
--- Only that column, in either direction: the index has no other column's values to order on, so
--- ORDER BY another column is refused rather than answered in the wrong order.
+-- Either direction: the reverse is the same walk from the other end. Ordering by a column no
+-- index on nickname is ordered by is refused rather than answered in the wrong order.
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY register_time ASC LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' ORDER BY user_id DESC LIMIT 20;
 
@@ -137,15 +138,12 @@ INSERT INTO search_demo.users (user_id, account_type, nickname, register_time, s
 DELETE FROM search_demo.users WHERE user_id = 0fcde168-fffa-41b0-a08c-2664b9faec1e;
 
 -- ---------------------------------------------------------------------------------------------
--- 8. Guard rails: what the index does not serve, and what happens then.
+-- 8. Guard rails: what a query on an indexed column may ask, and what happens when it asks more.
 -- ---------------------------------------------------------------------------------------------
--- Every LIKE on an indexed column goes to the index, ALLOW FILTERING or not. A prefix pattern is
--- one the index serves...
+-- Every LIKE on an indexed column goes to the index, ALLOW FILTERING or not, and every pattern
+-- LIKE can express is served: a prefix, a suffix, a single-character wildcard.
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '将军%' LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '将军%' LIMIT 20 ALLOW FILTERING;
-
--- ...a pattern with a single-character wildcard inside the keyword is not: the index node refuses
--- it, and the query fails with its reason rather than falling back to a scan.
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将_来%' LIMIT 20;
 
 -- A query that is not paged needs a LIMIT, of at most 1000 (cqlsh pages by default; section 6c
@@ -153,27 +151,29 @@ SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将_来%' LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%';
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' LIMIT 1001;
 
--- It is one LIKE on the indexed column, optionally a range on the ordered column, and nothing
--- else. A restriction the index cannot apply is refused rather than dropped: these queries do no
--- post-filtering, so an accepted-and-ignored predicate would return rows that do not match.
+-- Paged, it needs none, on any index: two rows a page, in the index's order.
+PAGING 2;
+SELECT username FROM search_demo.users WHERE username LIKE '%ng%';
+PAGING OFF;
+
+-- It is one LIKE on the indexed column and nothing else. A restriction the index cannot apply is
+-- refused rather than dropped: these queries do no post-filtering, so an accepted-and-ignored
+-- predicate would return rows that do not match.
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND status = 0 LIMIT 20;
 SELECT nickname FROM search_demo.users WHERE nickname LIKE '%将军%' AND username LIKE '%user%' LIMIT 20;
 
--- Not even an equality on the ordered column: the index takes a range, not a point.
+-- A range on register_time belongs to the index ordered by it, so it needs the ORDER BY that
+-- picks that index; and it is a range, not a point.
 SELECT nickname FROM search_demo.users
-  WHERE nickname LIKE '%将军%' AND register_time = '2024-07-01T00:00:00+0000' LIMIT 20;
+  WHERE nickname LIKE '%将军%' AND register_time < '2024-03-01T00:00:00+0000' LIMIT 20;
+SELECT nickname FROM search_demo.users
+  WHERE nickname LIKE '%将军%' AND register_time = '2024-07-01T00:00:00+0000'
+  ORDER BY register_time DESC LIMIT 20;
 
--- The username index was created without order_by, so it has no column to order on and no
--- position to resume a page from. ORDER BY and a range are both refused on it, and paging it
--- returns the whole result in one page with a warning saying so.
+-- The username column has no index ordered by anything, so ORDER BY is refused on it.
 SELECT username FROM search_demo.users WHERE username LIKE '%ng%' ORDER BY register_time DESC LIMIT 20;
-SELECT username FROM search_demo.users
-  WHERE username LIKE '%ng%' AND register_time < '2024-06-01T00:00:00+0000' LIMIT 20;
-PAGING 2;
-SELECT username FROM search_demo.users WHERE username LIKE '%ng%' LIMIT 20;
-PAGING OFF;
 
 -- Since every LIKE on the column goes to the index, a LIKE mixed with another restriction is
--- rejected rather than run as a filtered scan, ALLOW FILTERING or not. Dropping the index restores
--- filtered LIKE.
+-- rejected rather than run as a filtered scan, ALLOW FILTERING or not. Dropping the indexes
+-- restores filtered LIKE.
 SELECT nickname FROM search_demo.users WHERE account_type = 0 AND nickname LIKE '%将军%' LIMIT 20 ALLOW FILTERING;

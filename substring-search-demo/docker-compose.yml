@@ -1,4 +1,4 @@
-# Single-node ScyllaDB + Vector Store, both built from the pattern-index-poc branches of the
+# Single-node ScyllaDB + Vector Store, both built from the pattern-index-poc-upstream branches of the
 # submodules by ./build-images.sh; SCYLLA_IMAGE and VECTOR_STORE_IMAGE override them.
 services:
   scylla:
