@@ -39,8 +39,15 @@ hold it waits for a turn among the build rows, and a pool thread stays idle for 
 hold lasts. Before, a signal read ten times a second held the repair back whenever writes had
 waited in the queue, which under a mixed load was most of the time: with 3 million rows written
 beside 8 searching clients the writes now finish in 63 s instead of 98 and the median search
-takes 2.9 ms instead of 6.9. The slowest 1% of searches got slower in that run, 275 ms against
-50, because the repair now happens during the load instead of after it.
+takes 2.9 ms instead of 6.9.
+
+That brought a second problem into view. While the repair holds an index's lock, the writes to
+that index used to wait for it on the pool threads that had taken them, until every thread was
+waiting and the searches behind them: one search in a hundred took 275 ms. A write that finds
+the lock held now leaves its change in a queue of the index and frees its thread at once, and
+whoever holds the lock applies the queue, in order, as it lets go. The slowest 1% of searches
+in the same run take 18 to 20 ms, the longest under 90 ms instead of 0.9 s, and half again as
+many searches get done.
 
 ## Three things the first version got wrong
 
@@ -101,5 +108,6 @@ benchmark on a laptop, not a cluster run.
 | The class for build rows, and its cap | vector-store `4f1b6dc` |
 | Settings that follow a configuration reload | vector-store `5281887` |
 | The repair taking its turn among the build rows | vector-store `ef939fd` |
+| Writes that do not wait for a held lock on a pool thread | vector-store `e11fdd7` |
 | The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `c3fe0bd` |
 | The benchmark | vector-store `e61c99e` |
