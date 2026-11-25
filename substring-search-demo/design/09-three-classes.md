@@ -66,8 +66,10 @@ After the cap, one search in a hundred still took 20 ms. A trace showed a task t
 almost exactly 100 ms after nearly every commit: the reader being reloaded. The reload and the
 storage library's clean-up of unused files need the same lock, the reload arrives just as the
 clean-up starts, and the library waits for that lock by sleeping 100 ms. One thread of four was
-asleep most of the time. The reload now checks the lock itself every 0.1 ms and goes on as soon
-as it is free.
+asleep most of the time. The clean-up sleeps the same way when it finds the lock held by a
+reload, and it runs inside a commit. The indexes now keep their files in a store of our own
+whose lock wakes whoever waits for it the moment it is released: during a 10-second build the
+waits for that lock fell from 8.5 to 8.9 seconds in all to under 10 ms.
 
 This is not special to the pattern index. A full-text index of 1 million documents built on
 upstream's code slept this way after one commit in four, a thread asleep for a quarter of the
@@ -109,5 +111,5 @@ benchmark on a laptop, not a cluster run.
 | Settings that follow a configuration reload | vector-store `5281887` |
 | The repair taking its turn among the build rows | vector-store `ef939fd` |
 | Writes that do not wait for a held lock on a pool thread | vector-store `e11fdd7` |
-| The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `c3fe0bd` |
+| The lock that slept 100 ms | [tantivy/directory.rs](../../vector-store/crates/vector-store/src/tantivy/directory.rs); vector-store `c3fe0bd` (a first fix, for the reload only), `85a19f4` |
 | The benchmark | vector-store `e61c99e` |
