@@ -89,7 +89,7 @@ benchmark on a laptop, not a cluster run.
 | What | Where |
 |---|---|
 | Live writes ahead of searches, with a floor for searches | [worker.rs](../../vector-store/crates/vector-store/src/worker.rs); vector-store `39c3137` |
-| The class for build rows, and its cap | vector-store `0a790fb` |
-| Settings that follow a configuration reload | vector-store `948e2d2` |
-| The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `719f5f6` |
-| The benchmark | vector-store `57cb615` |
+| The class for build rows, and its cap | vector-store `e579ab3` |
+| Settings that follow a configuration reload | vector-store `79cd4d4` |
+| The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `7d3b445` |
+| The benchmark | vector-store `0a86773` |

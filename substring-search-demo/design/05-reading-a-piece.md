@@ -69,7 +69,7 @@ A larger piece no longer costs a page anything, which it did before.
 | What | Where |
 |---|---|
 | The runs of a piece, read as a merge by key | `walk_runs` in [tantivy.rs](../../vector-store/crates/vector-store/src/pattern_index/tantivy.rs); vector-store `20aa666` |
-| How much a pass takes from each run | vector-store `954b9da`, `3fc63cf` |
+| How much a pass takes from each run | vector-store `954b9da`, `df6d6d6` |
 | The sweep after a pass with no match | vector-store `73ae18e` |
-| Reading a piece whole | vector-store `e62c5b8` |
-| The page-cost matrix | vector-store `99b7034` |
+| Reading a piece whole | vector-store `40bc380` |
+| The page-cost matrix | vector-store `8468605` |
