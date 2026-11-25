@@ -33,9 +33,10 @@ red frame is where a page of the newest rows looks.
 3. **A repair step** takes fresh rows from the stretch of the order that has the most of them
    and rewrites them into the ordered kind. It runs again and again until no fresh row is left.
 4. **The repair waits its turn.** It does not run while an index is being built from a full
-   scan, nor while changes from the table are arriving late, nor while writes are waiting for a
-   thread. A burst of writes leaves more fresh pieces for a while, which searches pay for,
-   instead of delaying the writes.
+   scan, nor while changes from the table are arriving late. Otherwise each step of it waits
+   for a pool thread the searches and the live writes do not need (see
+   [Three classes of work](09-three-classes.md)). A burst of writes leaves more fresh pieces
+   for a while, which searches pay for, instead of delaying the writes.
 
 ## The evidence
 
@@ -61,5 +62,5 @@ red frame is where a page of the newest rows looks.
 | The cap, the two kinds, merging from the tick | vector-store `0576b52`, scylladb `2bfd34512e` |
 | The repair (`rewrite`) | vector-store `dfd6196` |
 | No repair during a full scan or while changes lag | vector-store `fe95a4a` |
-| The repair gives way to writes | vector-store `b237f45`, `0836be9` |
+| The repair gives way to writes | vector-store `0836be9` (between its holds), `ef939fd` (a turn in the pool; replaces the rule of `b237f45`) |
 | Design notes, with the measurements behind each rule | [stage-2-ordering.md](../../vector-store/docs/dev/pattern/stage-2-ordering.md), "Two tiers and a continuous repair" |
