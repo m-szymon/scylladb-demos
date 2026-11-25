@@ -109,7 +109,7 @@ benchmark on a laptop, not a cluster run.
 | Live writes ahead of searches, with a floor for searches | [worker.rs](../../vector-store/crates/vector-store/src/worker.rs); vector-store `12f2e0e` |
 | The class for build rows, and its cap | vector-store `4f1b6dc` |
 | Settings that follow a configuration reload | vector-store `5281887` |
-| The repair taking its turn among the build rows | vector-store `ef939fd` |
-| Writes that do not wait for a held lock on a pool thread | vector-store `e11fdd7` |
-| The lock that slept 100 ms | [tantivy/directory.rs](../../vector-store/crates/vector-store/src/tantivy/directory.rs); vector-store `c3fe0bd` (a first fix, for the reload only), `85a19f4` |
+| The repair taking its turn among the build rows | vector-store `703dde6` |
+| Writes that do not wait for a held lock on a pool thread | vector-store `e1382b0` |
+| The lock that slept 100 ms | [tantivy/directory.rs](../../vector-store/crates/vector-store/src/tantivy/directory.rs); vector-store `d59835e` |
 | The benchmark | vector-store `e61c99e` |
