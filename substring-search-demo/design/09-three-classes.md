@@ -74,8 +74,10 @@ benchmark on a laptop, not a cluster run.
 
 ## Why this part is marked "working"
 
-- **Unexplained:** beside a build each search also runs 20 to 35% longer. Taking cores away
-  costs 2 to 3% and heavy memory traffic 7 to 9%, so neither explains it.
+- **A search runs longer beside a build, by as much as the machine shares:** 33% longer where
+  a search and a build thread ran on two hyperthreads of one core, 8% where each had a core of
+  its own, which is what heavy memory traffic alone costs. The 8% is what to expect on a node
+  whose vCPUs are whole cores.
 - **On a saturated node the build pays:** it took 50 s where it took 34 s, for 11% more search
   throughput.
 - **The vector index is not covered:** its writes still count as searches.
