@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 372" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Three classes of work sharing the index node's threads">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 394" font-family="system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-label="Three classes of work sharing the index node's threads">
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker></defs>
-<rect width="800" height="372" rx="10" fill="#f8f9fb"/>
+<rect width="800" height="394" rx="10" fill="#f8f9fb"/>
 <text x="400" y="32" font-size="15" fill="#1f2933" text-anchor="middle">Four threads of the index node, three kinds of work waiting for them.</text>
 <text x="40" y="74" font-size="14" fill="#1f2933" font-weight="600">Searches</text>
 <rect x="40" y="86" width="22" height="26" rx="4" fill="#dbe7fb" stroke="#2f6fde" stroke-width="1.3"/>
@@ -18,7 +18,7 @@
 <text x="230" y="188" font-size="13" fill="#52606d">first: a new row must not</text>
 <text x="230" y="206" font-size="13" fill="#52606d">wait behind the searches</text>
 <line x1="450" y1="195" x2="556" y2="196" stroke="#52606d" stroke-width="1.4" marker-end="url(#a)"/>
-<text x="40" y="266" font-size="14" fill="#1f2933" font-weight="600">Rows of a build</text>
+<text x="40" y="266" font-size="14" fill="#1f2933" font-weight="600">Rows of a build, repair steps</text>
 <rect x="40" y="278" width="22" height="26" rx="4" fill="#fbe6d0" stroke="#e07a1f" stroke-width="1.3"/>
 <rect x="66" y="278" width="22" height="26" rx="4" fill="#fbe6d0" stroke="#e07a1f" stroke-width="1.3"/>
 <rect x="92" y="278" width="22" height="26" rx="4" fill="#fbe6d0" stroke="#e07a1f" stroke-width="1.3"/>
@@ -38,5 +38,6 @@
 <rect x="566" y="244" width="180" height="36" rx="6" fill="#fbe6d0" stroke="#e07a1f" stroke-width="1.5"/>
 <text x="656" y="267" font-size="13" fill="#1f2933" text-anchor="middle">thread 4</text>
 <text x="656" y="92" font-size="14" fill="#1f2933" font-weight="600" text-anchor="middle">the pool</text>
-<text x="400" y="352" font-size="13" fill="#52606d" text-anchor="middle">A thread that comes free takes its next task by these rules. A task is never interrupted, so tasks have to be short.</text>
+<text x="400" y="352" font-size="13" fill="#52606d" text-anchor="middle">A thread that comes free takes its next task by these rules. A task is never interrupted, so tasks have to be short:</text>
+<text x="400" y="372" font-size="13" fill="#52606d" text-anchor="middle">a repair step works on a thread of its own, and a pool thread stays idle for as long as it holds its index&#39;s lock.</text>
 </svg>

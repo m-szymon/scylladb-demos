@@ -334,7 +334,7 @@ def classes():
     queues = [
         ("Searches", SOFT_BLUE, BLUE, 5, ["never less than a quarter", "of the threads&#39; time"]),
         ("Live writes", SOFT_GREEN, GREEN, 3, ["first: a new row must not", "wait behind the searches"]),
-        ("Rows of a build", SOFT_ORANGE, ORANGE, 6, ["only when nothing else waits,", "or under a tenth of the time;", "on 2 threads at most"]),
+        ("Rows of a build, repair steps", SOFT_ORANGE, ORANGE, 6, ["only when nothing else waits,", "or under a tenth of the time;", "on 2 threads at most"]),
     ]
     for i, (name, soft, colour, n, notes) in enumerate(queues):
         y = 70 + i * 96
@@ -350,8 +350,9 @@ def classes():
         b.append(rect(566, y, 180, 36, soft, colour, rx=6))
         b.append(text(656, y + 23, f"thread {w + 1}", 13, anchor="middle"))
     b.append(text(656, 92, "the pool", 14, weight=600, anchor="middle"))
-    b.append(text(400, 352, "A thread that comes free takes its next task by these rules. A task is never interrupted, so tasks have to be short.", 13, MUTED, anchor="middle"))
-    save("classes.svg", 800, 372, "Three classes of work sharing the index node's threads", b)
+    b.append(text(400, 352, "A thread that comes free takes its next task by these rules. A task is never interrupted, so tasks have to be short:", 13, MUTED, anchor="middle"))
+    b.append(text(400, 372, "a repair step works on a thread of its own, and a pool thread stays idle for as long as it holds its index&#39;s lock.", 13, MUTED, anchor="middle"))
+    save("classes.svg", 800, 394, "Three classes of work sharing the index node's threads", b)
 
 
 if __name__ == "__main__":
