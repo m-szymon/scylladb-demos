@@ -60,6 +60,6 @@ red frame is where a page of the newest rows looks.
 |---|---|
 | The cap, the two kinds, merging from the tick | vector-store `0576b52`, scylladb `2bfd34512e` |
 | The repair (`rewrite`) | vector-store `437a022` |
-| No repair during a full scan or while changes lag | vector-store `f8ee2ef` |
-| The repair gives way to writes | vector-store `75f15fc`, `637399e` |
+| No repair during a full scan or while changes lag | vector-store `23736fa` |
+| The repair gives way to writes | vector-store `c08f874`, `a148fac` |
 | Design notes, with the measurements behind each rule | [stage-2-ordering.md](../../vector-store/docs/dev/pattern/stage-2-ordering.md), "Two tiers and a continuous repair" |
