@@ -71,8 +71,9 @@ frequent keywords and less on rare ones.
 
 - **An index built over a table that is already loaded** receives its rows in token order. In
   token order that is exactly the index's own order, for free. Scattered, the rows arrive in no
-  order and the index has to be tidied afterwards. On 2 million rows locally this made the build
-  10% longer; it has not been measured at 10 million.
+  order and the index has to be tidied afterwards. On 10 million rows locally the build took
+  374 s scattered against 113 s in token order, about three times as long. Searches cost the
+  same once it is done.
 - **The rows of a page are no longer neighbours**, so they cannot be read with one cheap range
   read. Reading them is now the slowest step for frequent keywords.
 - **The order differs from the same query without the index.** An index that must return the
