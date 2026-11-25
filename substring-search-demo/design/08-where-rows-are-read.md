@@ -96,6 +96,6 @@ same hot shard and the same fix.
 | What | Where |
 |---|---|
 | The scramble, one function | `scattered_key` in [order.rs](../../vector-store/crates/vector-store/src/pattern_index/order.rs) |
-| The option | `PartitionOrder` in [lib.rs](../../vector-store/crates/vector-store/src/lib.rs); vector-store commit `1553f04` |
+| The option | `PartitionOrder` in [lib.rs](../../vector-store/crates/vector-store/src/lib.rs); vector-store commit `172c4f6` |
 | Validation of the option | [pattern_index.cc](../../scylladb/index/pattern_index.cc); scylladb commit `c869e07ceb` |
 | The benchmark plan | [aws_partition_config.yaml](../../scylla-cluster-tests/data_dir/latte/substring_search/aws_partition_config.yaml) |

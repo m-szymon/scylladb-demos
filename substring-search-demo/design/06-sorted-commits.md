@@ -60,5 +60,5 @@ On the cluster, with 5,000 writes/s running beside the queries, entries read per
 
 | What | Where |
 |---|---|
-| Holding, sorting and writing a commit's rows | `write_held` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `169287b` |
-| The first stretch divided among overlapping runs | vector-store `16e6f58` |
+| Holding, sorting and writing a commit's rows | `write_held` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `88211ea` |
+| The first stretch divided among overlapping runs | vector-store `492f138` |
