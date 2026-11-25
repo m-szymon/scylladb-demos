@@ -78,4 +78,4 @@ costs about half a microsecond when its value is cached.
 | `min_gram`, `max_gram` | vector-store `c7d90fc`, scylladb `7fc6095159` |
 | Skip a part that lacks a piece | vector-store `9f395f0` |
 | The rarest pieces only | vector-store `18c194f`, scylladb `a0158bbece` |
-| The check without a regular expression | vector-store `92ea6fd` |
+| The check without a regular expression | vector-store `f1bb744` |

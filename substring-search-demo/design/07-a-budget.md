@@ -67,12 +67,12 @@ and an unpaged query fails at the timeout.
   all such pieces.
 - **Queries that match nothing paid for the clock**, 15 to 30% of their time in the index, until
   the budget was made to look at it only for a part of the index that has candidates
-  (vector-store `fc04459`).
+  (vector-store `cdac1d5`).
 
 ## Code
 
 | What | Where |
 |---|---|
-| The budget and the cut | `SearchBudget`, `Spending` in [tantivy.rs](../../vector-store/crates/vector-store/src/pattern_index/tantivy.rs); vector-store `fc04459` |
-| The setting | vector-store `915cf9d` |
+| The budget and the cut | `SearchBudget`, `Spending` in [tantivy.rs](../../vector-store/crates/vector-store/src/pattern_index/tantivy.rs); vector-store `cdac1d5` |
+| The setting | vector-store `1b5a439` |
 | Topping up a short page | [ordered_pattern_select_statement.cc](../../scylladb/cql3/statements/external_search/ordered_pattern_select_statement.cc); scylladb `0c9559b487` |
