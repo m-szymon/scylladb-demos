@@ -33,6 +33,15 @@ A node with four threads serves searches on index A while index B is being built
 
 The three numbers are settings, and they take effect without a restart.
 
+The repair that puts fresh rows where they belong counts as build rows too. It keeps a thread
+of its own, because one step holds the index's lock for most of a second, but before each such
+hold it waits for a turn among the build rows, and a pool thread stays idle for as long as the
+hold lasts. Before, a signal read ten times a second held the repair back whenever writes had
+waited in the queue, which under a mixed load was most of the time: with 3 million rows written
+beside 8 searching clients the writes now finish in 63 s instead of 98 and the median search
+takes 2.9 ms instead of 6.9. The slowest 1% of searches got slower in that run, 275 ms against
+50, because the repair now happens during the load instead of after it.
+
 ## Three things the first version got wrong
 
 - **A row's changes must stay in one queue.** A build row that replaces an older value is a
@@ -91,5 +100,6 @@ benchmark on a laptop, not a cluster run.
 | Live writes ahead of searches, with a floor for searches | [worker.rs](../../vector-store/crates/vector-store/src/worker.rs); vector-store `12f2e0e` |
 | The class for build rows, and its cap | vector-store `4f1b6dc` |
 | Settings that follow a configuration reload | vector-store `5281887` |
+| The repair taking its turn among the build rows | vector-store `ef939fd` |
 | The reload that slept 100 ms | `wait_for_the_meta_lock` in [tantivy/mod.rs](../../vector-store/crates/vector-store/src/tantivy/mod.rs); vector-store `c3fe0bd` |
 | The benchmark | vector-store `e61c99e` |
